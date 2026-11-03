@@ -1,55 +1,78 @@
 <div align="center">
 
-<img src="docs/finsight-readme.gif" alt="FinSight animated banner: see your money, understand your future" width="100%" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=230&section=header&text=FinSight&fontSize=76&fontColor=ffffff&animation=fadeIn&fontAlignY=36&desc=See%20your%20money.%20Understand%20your%20future.&descSize=20&descAlignY=58" width="100%" alt="FinSight banner" />
 
-# ✦ FinSight
-
-### See your money. Understand your future.
+<a href="https://finsight-personal-finance.onrender.com">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=900&color=6378D8&center=true&vCenter=true&width=640&lines=Track+income+and+expenses+in+real+time;Set+budgets+that+warn+you+early;Watch+savings+goals+come+to+life;Forecast+your+next+30+days" alt="Animated tagline" />
+</a>
 
 **An elegant, motion-driven personal finance dashboard for modern money routines.**
 
-[✦ Explore Live Demo ✦](https://finsight-personal-finance.onrender.com)
-
 <br/>
 
-[![Live Deployment](https://img.shields.io/badge/Render-Live%20Demo-46e3b7?style=for-the-badge&logo=render&logoColor=white)](https://finsight-personal-finance.onrender.com)
+[![Explore Live Demo](https://img.shields.io/badge/✦_Explore_Live_Demo-46e3b7?style=for-the-badge&logo=render&logoColor=white)](https://finsight-personal-finance.onrender.com)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Finsight--Finance-6378d8?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Dhruvi-tech/Finsight-Finance)
-[![React 19](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
-[![TypeScript 5](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
+
+![React 19](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript 5](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)
+![Node 24+](https://img.shields.io/badge/Node-24+-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white)
 
 </div>
 
----
+<br/>
 
-> **Live Preview:** Try the interactive dashboard instantly at **[finsight-personal-finance.onrender.com](https://finsight-personal-finance.onrender.com)** using the **Demo sign in** option on the welcome screen.
+> [!TIP]
+> **Try it in 10 seconds.** Open the [live demo](https://finsight-personal-finance.onrender.com) and choose **Demo sign in** on the welcome screen. No account needed.
 
----
+<br/>
 
 ## ✦ Experience FinSight
 
-FinSight is an intelligent personal finance platform built to make money management feel intuitive, calm, and insightful. It brings your everyday expenses, monthly budgets, long-term savings goals, and cash flow forecasts into one fluid, motion-aware workspace.
+FinSight makes money management feel intuitive, calm and insightful. Your everyday expenses, monthly budgets, long-term savings goals and cash flow forecasts live in one fluid, motion-aware workspace.
 
-| 📊 See the Whole Picture | 🎯 Make a Confident Plan | ⚡ Stay on Track |
-| :--- | :--- | :--- |
-| **Real-Time Balance & Cash Flow**<br/>Track income, expenses, interactive monthly rhythm charts, and category mix. | **Smart Budgets & Goals**<br/>Set category limits, milestone-based savings goals, and forward projections. | **Insights & Fast Actions**<br/>Instant search (`⌘K`), Quick Add (`N`), CSV/PDF exports, and FinSight AI assistant. |
+<table>
+<tr>
+<td width="33%" valign="top">
 
----
+### 📊 See the whole picture
+Track income, expenses, interactive monthly rhythm charts and your category mix in real time.
+
+</td>
+<td width="33%" valign="top">
+
+### 🎯 Make a confident plan
+Set category limits, milestone-based savings goals and forward projections.
+
+</td>
+<td width="33%" valign="top">
+
+### ⚡ Stay on track
+Instant search (`⌘K`), Quick Add (`N`), CSV/PDF exports and the FinSight AI assistant.
+
+</td>
+</tr>
+</table>
+
+<br/>
 
 ## ✨ Key Capabilities
 
-- **Fluid Ledger & Transactions:** Log income and expenses with categories, payment methods, and notes. Filter activity, edit entries inline, and export to CSV.
-- **Toggleable Desktop Sidebar:** Smoothly hide the entire navigation panel with a single click on the menu bars (`☰`) or close button (`✕`) for an expansive full-screen canvas.
-- **Dynamic Cash Flow & Spending Mix:** Interactive monthly trend line/bar charts and category breakdown donut visualizations powered by Recharts.
-- **Category Budgets & Pace Alerts:** Set monthly limits with animated progress bars, warning badges, and real-time pace tracking.
-- **Savings Milestones & Rotating Orbit:** Celebrate savings achievements and watch goals approach with visual milestone badges and progress indicators.
-- **30-Day Outlook & Recurring Expense Detection:** Automatically detect recurring subscriptions and project estimated end-of-month cash flow.
-- **Interactive Calendar & Bill Reminders:** View scheduled upcoming payments on an intuitive calendar with quick paid/unpaid toggles.
-- **FinSight AI Assistant:** Fast, rule-based answers and tips tailored to your ledger activity.
-- **Period Financial PDF Reports:** Download neatly structured, professional PDF summary reports on demand.
-- **Micro-Interactions & Dark Mode:** Silky-smooth hover lifts, shimmering progress bars, breathing status indicators, and keyboard shortcuts.
+| | Feature | What it does |
+| :-: | :-- | :-- |
+| 📒 | **Fluid ledger** | Log income and expenses with categories, payment methods and notes. Filter, edit inline and export to CSV. |
+| 🗂️ | **Toggleable sidebar** | Hide the whole navigation panel with `☰` or `✕` for an expansive full-screen canvas. |
+| 📈 | **Cash flow and spending mix** | Monthly trend line/bar charts and a category donut, powered by Recharts. |
+| 🚦 | **Budgets and pace alerts** | Monthly limits with animated progress bars, warning badges and live pace tracking. |
+| 🏆 | **Savings milestones** | Milestone badges and progress indicators, plus a rotating orbit that shows goals approaching. |
+| 🔮 | **30-day outlook** | Detects recurring subscriptions and projects end-of-month cash flow. |
+| 📅 | **Calendar and bill reminders** | Upcoming payments on a calendar with quick paid/unpaid toggles. |
+| 🤖 | **FinSight AI assistant** | Fast, rule-based answers and tips tailored to your ledger. |
+| 🧾 | **PDF reports** | Structured, professional period summaries on demand. |
+| 🌙 | **Micro-interactions and dark mode** | Hover lifts, shimmering progress bars, breathing status indicators and keyboard shortcuts. |
 
----
+<br/>
 
 ## 🚀 Quick Start
 
@@ -60,39 +83,54 @@ Requires **Node.js 24+** and **npm**.
 npm ci
 npm ci --prefix client
 
-# 2. Start development servers
+# 2. Start the development servers
 npm run dev
 ```
 
-The client starts at `http://localhost:5173` and the API service starts at `http://localhost:4000`.
+| Service | URL |
+| :-- | :-- |
+| Client | `http://localhost:5173` |
+| API | `http://localhost:4000` |
 
-### Quality Checks & Build
+### Quality checks and build
 
 ```sh
-# Run test suite
-npm test
-
-# Build client production bundle
-npm run build
+npm test         # run the test suite
+npm run build    # build the client production bundle
 ```
 
----
+<br/>
 
 ## 🛠️ Tech Architecture
 
-- **Frontend:** React 19, TypeScript 5, Vite, Recharts, Lucide Icons, jsPDF, and custom CSS motion system.
-- **Backend:** Node.js, Express, MongoDB, Mongoose, bcrypt, signed HTTP-only JWT cookies, Zod validation, Helmet, and rate limiting.
-- **Storage:** Client finance records persist in browser `localStorage`, scoped per account for zero-latency, private, client-side exploration without needing bank credentials.
+```mermaid
+flowchart LR
+    A["React 19 + TypeScript + Vite"] -->|"HTTP-only JWT cookies"| B["Express API"]
+    B --> C[("MongoDB + Mongoose")]
+    A --> D[("Browser localStorage<br/>per-account finance records")]
+```
 
----
+| Layer | Stack |
+| :-- | :-- |
+| 🎨 **Frontend** | React 19, TypeScript 5, Vite, Recharts, Lucide Icons, jsPDF and a custom CSS motion system |
+| ⚙️ **Backend** | Node.js, Express, MongoDB, Mongoose, bcrypt, signed HTTP-only JWT cookies, Zod validation, Helmet and rate limiting |
+| 🔒 **Storage** | Finance records persist in browser `localStorage`, scoped per account. Zero-latency, private and no bank credentials needed. |
 
-## 🌐 Deployment & Repository
+<br/>
 
-- **Live Application:** [https://finsight-personal-finance.onrender.com](https://finsight-personal-finance.onrender.com)
-- **Source Code:** [https://github.com/Dhruvi-tech/Finsight-Finance](https://github.com/Dhruvi-tech/Finsight-Finance)
+## 🌐 Deployment and Repository
 
----
+| | Link |
+| :-- | :-- |
+| **Live application** | [finsight-personal-finance.onrender.com](https://finsight-personal-finance.onrender.com) |
+| **Source code** | [github.com/Dhruvi-tech/Finsight-Finance](https://github.com/Dhruvi-tech/Finsight-Finance) |
+
+<br/>
 
 <div align="center">
-  <sub>© 2026 FinSight · Crafted with care for your next money move.</sub>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=120&section=footer" width="100%" alt="" />
+
+<sub>© 2026 FinSight · Crafted with care for your next money move.</sub>
+
 </div>
