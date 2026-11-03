@@ -3,6 +3,7 @@
 ## Working account portal
 
 - Overview dashboard with balance, current month income and expense, savings rate, spending mix, cash flow, budget usage, goals, and payment reminders.
+- 30-day cash-flow outlook using recent recorded monthly averages and payment reminders, plus repeat-expense detection across months with estimated monthly and annual totals.
 - Add and delete income or expense entries, search/filter, and CSV export.
 - Category budget creation and limit editing; usage is calculated from saved expenses.
 - Savings goal creation, contribution, deletion, progress, and estimated monthly pace.
