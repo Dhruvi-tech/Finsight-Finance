@@ -22,3 +22,6 @@
 - The calendar contains user-managed demo reminders; it does not create reminders from a bank feed.
 - AI is deterministic rules in the browser. No AI provider is configured or called.
 - No live database, production deployment, responsive browser-matrix QA, or security certification is claimed.
+# Authentication and entry flow
+
+FinSight opens with a sign-up page and a sign-in tab. Email/password account requests use the Express authentication API, HTTP-only session cookies, bcrypt password hashing, server validation, and rate limiting. The demo entry bypasses account creation and is clearly labeled; its synthetic sample ledger is kept separate from per-email local browser data. The account API requires `MONGODB_URI` and `JWT_SECRET`. The signed-in finance screens still use browser storage in this MVP and are not yet synced to the API.

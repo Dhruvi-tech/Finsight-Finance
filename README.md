@@ -4,7 +4,7 @@
 
 FinSight is a student-oriented personal finance experience for understanding everyday income, spending, budgets, and savings goals. The new implementation preserves the source repository's original README and initial commit in its Git history.
 
-> **Current status:** the responsive browser app is a synthetic-data demo. Its financial records stay in this browser's `localStorage`. A separate Express/MongoDB API foundation is included, but the browser app is not yet connected to it. Do not enter real financial information or use this as a live account system.
+> **Current status:** the responsive browser app includes email sign-up/sign-in screens backed by the Express/MongoDB auth endpoints, plus a separate synthetic demo entry. Account creation requires a configured MongoDB connection and JWT secret. Finance records in the portal still live in browser storage and are not yet synchronized to the API; do not enter real financial information.
 
 ## Product features
 
@@ -16,13 +16,14 @@ FinSight is a student-oriented personal finance experience for understanding eve
 - Rule-based, explainable FinSight insights that use browser-saved demo records.
 - Bills and calendar reminders, notifications, report preview, profile preferences, theme toggle, and demo reset.
 - Responsive layouts for desktop, tablet, and mobile.
+- Sign-up and sign-in screens using email/password, with clear API readiness feedback and demo portal entry.
 
 ## Architecture
 
 - **Client:** React 19, TypeScript, Vite, Recharts, Lucide icons, and a custom responsive CSS design system.
 - **API foundation:** Node.js, Express, MongoDB, Mongoose, bcrypt password hashing, signed HTTP-only JWT session cookie, Zod validation, Helmet, CORS/origin checks, and rate limiting.
 - **Demo persistence:** browser `localStorage`, clearly marked as demo mode.
-- **Production data:** API `FinanceRecord` documents are scoped by the authenticated user's id. Browser/API integration and production account journeys remain unfinished.
+- **Account entry:** API signup/login creates a bcrypt-hashed account and an HTTP-only session cookie. Signed-in portal finance data remains browser-local and per-email namespaced until client/API sync is implemented.
 
 See [architecture](docs/ARCHITECTURE.md), [feature status](docs/FEATURES.md), [database schema](docs/DATABASE.md), and [API reference](docs/API.md).
 
@@ -38,7 +39,7 @@ npm run dev
 
 The Vite client runs at `http://localhost:5173`; the API runs at `http://localhost:4000`. Without database settings, the API starts in limited mode: `/api/health` is available, but account routes are disabled.
 
-Copy `.env.example` to `.env` and configure `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_ORIGIN` to enable the API. Keep secrets in local environment files or the deployment provider's secret store. `client/.env.example` documents `VITE_API_URL`; the current demo client does not yet consume it.
+Copy `.env.example` to `.env` and configure `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_ORIGIN` to enable account creation and sign-in. Keep secrets in local environment files or the deployment provider's secret store. Vite proxies `/api` to the local API during development; set `VITE_API_URL` for a separately deployed API.
 
 ## Checks
 
