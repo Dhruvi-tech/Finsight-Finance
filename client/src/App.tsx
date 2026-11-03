@@ -52,8 +52,20 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
   const [apiReady, setApiReady] = useState<boolean | null>(null)
   const [showGoogleChooser, setShowGoogleChooser] = useState(false)
   const [showAddGoogleAccount, setShowAddGoogleAccount] = useState(false)
-  const [customGoogleName, setCustomGoogleName] = useState('')
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('')
+  const [googleFormName, setGoogleFormName] = useState('')
+  const [googleFormEmail, setGoogleFormEmail] = useState('')
+  const [googleFormPassword, setGoogleFormPassword] = useState('')
+  const [googleFormError, setGoogleFormError] = useState('')
+
+  const [browserGoogleAccounts, setBrowserGoogleAccounts] = useState<Array<{
+    name: string
+    email: string
+    avatar?: string
+    avatarMode: 'initial' | 'photo'
+    badge?: string
+  }>>(() => {
+    return readStore('finsight-google-accounts', [])
+  })
 
   useEffect(() => {
     fetch(`${API_BASE}/api/health`)
@@ -65,23 +77,6 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
       .then(setApiReady)
       .catch(() => setApiReady(false))
   }, [])
-
-  const googleAccounts = [
-    {
-      name: 'Dhruvi Mittal',
-      email: 'dhruvimittalbsc24@rvu.edu.in',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80',
-      avatarMode: 'photo' as const,
-      badge: 'Signed in'
-    },
-    {
-      name: 'Dhruvi Tech',
-      email: 'dhruvi.tech@gmail.com',
-      avatar: '',
-      avatarMode: 'initial' as const,
-      badge: 'Google Account'
-    }
-  ]
 
   const selectGoogleAccount = (acc: { name: string; email: string; avatar?: string; avatarMode: 'initial' | 'photo' }) => {
     const googleUser: Account = {
@@ -96,6 +91,33 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
     }
     setShowGoogleChooser(false)
     onAccount(googleUser)
+  }
+
+  const handleGoogleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setGoogleFormError('')
+    if (!googleFormEmail.trim() || !googleFormEmail.includes('@')) {
+      setGoogleFormError('Please enter a valid Gmail address.')
+      return
+    }
+    if (!googleFormPassword.trim()) {
+      setGoogleFormError('Please enter your Google password.')
+      return
+    }
+    const emailVal = googleFormEmail.trim().toLowerCase()
+    const nameVal = googleFormName.trim() || (emailVal.split('@')[0] ? emailVal.split('@')[0].charAt(0).toUpperCase() + emailVal.split('@')[0].slice(1) : 'Google User')
+    const newAccount = {
+      name: nameVal,
+      email: emailVal,
+      avatar: '',
+      avatarMode: 'initial' as const,
+      badge: 'Signed in'
+    }
+    const filtered = browserGoogleAccounts.filter(a => a.email !== emailVal)
+    const updated = [newAccount, ...filtered]
+    setBrowserGoogleAccounts(updated)
+    localStorage.setItem('finsight-google-accounts', JSON.stringify(updated))
+    selectGoogleAccount(newAccount)
   }
 
   const dispatchGmailCode = (targetEmail: string) => {
@@ -147,7 +169,7 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
       if (code === gmailCode || code.length === 6) {
         const localUser: Account = {
           id: 'user-' + Math.random().toString(36).substring(2, 9),
-          name: (mode === 'signup' && name.trim()) ? name.trim() : (email.split('@')[0] || 'Dhruvi'),
+          name: (mode === 'signup' && name.trim()) ? name.trim() : (email.split('@')[0] ? email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1) : 'User'),
           email: email.trim().toLowerCase(),
           currency: 'INR',
           mfaEnabled: true,
@@ -165,75 +187,111 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
 
   return <div className="auth-screen">
     {showGoogleChooser && (
-      <div className="google-modal-backdrop" onClick={() => setShowGoogleChooser(false)}>
+      <div className="google-modal-backdrop" onClick={() => { setShowGoogleChooser(false); setShowAddGoogleAccount(false) }}>
         <div className="google-modal" onClick={e => e.stopPropagation()}>
           <div className="google-modal-header">
-            <svg width="28" height="28" viewBox="0 0 24 24">
+            <svg width="32" height="32" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
-            <h3>Sign in with Google</h3>
-            <p>Choose an account to continue to <b>FinSight</b></p>
+            <h3>{browserGoogleAccounts.length > 0 && !showAddGoogleAccount ? 'Choose an account' : 'Sign in with Google'}</h3>
+            <p>to continue to <b>FinSight</b></p>
           </div>
 
-          <div className="google-account-list">
-            {googleAccounts.map(acc => (
-              <button key={acc.email} type="button" className="google-account-item" onClick={() => selectGoogleAccount(acc)}>
-                <div className="google-account-avatar" style={{ background: acc.avatar ? 'transparent' : 'linear-gradient(135deg, #4285F4, #669df6)' }}>
-                  {acc.avatar ? <img src={acc.avatar} alt={acc.name} /> : (acc.name.charAt(0).toUpperCase())}
+          {browserGoogleAccounts.length > 0 && !showAddGoogleAccount ? (
+            <div className="google-account-list">
+              {browserGoogleAccounts.map(acc => (
+                <div key={acc.email} className="google-account-row">
+                  <button type="button" className="google-account-item" onClick={() => selectGoogleAccount(acc)}>
+                    <div className="google-account-avatar" style={{ background: acc.avatar ? 'transparent' : 'linear-gradient(135deg, #4285F4, #669df6)' }}>
+                      {acc.avatar ? <img src={acc.avatar} alt={acc.name} /> : (acc.name ? acc.name.charAt(0).toUpperCase() : acc.email.charAt(0).toUpperCase())}
+                    </div>
+                    <div className="google-account-info">
+                      <b>{acc.name}</b>
+                      <span>{acc.email}</span>
+                    </div>
+                    <span className="gmail-badge"><i/> Signed in</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="google-remove-btn"
+                    title="Remove this account"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const updated = browserGoogleAccounts.filter(a => a.email !== acc.email)
+                      setBrowserGoogleAccounts(updated)
+                      localStorage.setItem('finsight-google-accounts', JSON.stringify(updated))
+                    }}
+                  >
+                    <X size={14}/>
+                  </button>
                 </div>
-                <div className="google-account-info">
-                  <b>{acc.name}</b>
-                  <span>{acc.email}</span>
-                </div>
-                {acc.badge && <span className="gmail-badge"><i/> {acc.badge}</span>}
-              </button>
-            ))}
+              ))}
 
-            {!showAddGoogleAccount ? (
               <button type="button" className="google-account-item" onClick={() => setShowAddGoogleAccount(true)}>
                 <div className="google-account-avatar" style={{ background: '#f1f3f4', color: '#5f6368' }}>+</div>
                 <div className="google-account-info">
                   <b>Use another account</b>
-                  <span>Sign in with a different Gmail address</span>
+                  <span>Sign in with a different Google account</span>
                 </div>
               </button>
-            ) : (
-              <div style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            </div>
+          ) : (
+            <form className="google-signin-form" onSubmit={handleGoogleFormSubmit}>
+              <div className="google-field">
+                <label>Your full name</label>
                 <input
-                  value={customGoogleName}
-                  onChange={e => setCustomGoogleName(e.target.value)}
-                  placeholder="Your Name (e.g. Dhruvi)"
+                  value={googleFormName}
+                  onChange={e => setGoogleFormName(e.target.value)}
+                  placeholder="Enter your name"
+                  required
                 />
+              </div>
+              <div className="google-field">
+                <label>Email or phone</label>
                 <input
                   type="email"
-                  value={customGoogleEmail}
-                  onChange={e => setCustomGoogleEmail(e.target.value)}
-                  placeholder="Your Gmail (e.g. you@gmail.com)"
+                  value={googleFormEmail}
+                  onChange={e => setGoogleFormEmail(e.target.value)}
+                  placeholder="name@gmail.com"
+                  required
                 />
-                <button
-                  type="button"
-                  className="primary-btn"
-                  onClick={() => {
-                    if (!customGoogleEmail.trim()) return
-                    selectGoogleAccount({
-                      name: customGoogleName.trim() || customGoogleEmail.split('@')[0],
-                      email: customGoogleEmail.trim().toLowerCase(),
-                      avatar: '',
-                      avatarMode: 'initial'
-                    })
-                  }}
-                >
-                  Continue with this Gmail
+              </div>
+              <div className="google-field">
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={googleFormPassword}
+                  onChange={e => setGoogleFormPassword(e.target.value)}
+                  placeholder="Enter your Google password"
+                  required
+                />
+              </div>
+
+              {googleFormError && <div className="auth-error" style={{ margin: '4px 0' }}>{googleFormError}</div>}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                {browserGoogleAccounts.length > 0 ? (
+                  <button
+                    type="button"
+                    className="outline-btn"
+                    style={{ fontSize: '12px' }}
+                    onClick={() => { setShowAddGoogleAccount(false); setGoogleFormError('') }}
+                  >
+                    Back to accounts
+                  </button>
+                ) : <span/>}
+                <button type="submit" className="google-submit-btn">
+                  Continue to FinSight
                 </button>
               </div>
-            )}
-          </div>
+            </form>
+          )}
 
-          <div className="google-modal-foot">
-            <button type="button" className="outline-btn" onClick={() => setShowGoogleChooser(false)}>Cancel</button>
+          <div className="google-modal-foot" style={{ marginTop: 12 }}>
+            <button type="button" className="outline-btn" onClick={() => { setShowGoogleChooser(false); setShowAddGoogleAccount(false) }}>Cancel</button>
           </div>
         </div>
       </div>
@@ -348,11 +406,11 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
             <form onSubmit={submit}>
               {mode === 'signup' && (
                 <label className="auth-label">Full name
-                  <input autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required maxLength={80}/>
+                  <input autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Enter your full name" required maxLength={80}/>
                 </label>
               )}
-              <label className="auth-label">Email address
-                <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required maxLength={254}/>
+              <label className="auth-label">Gmail / Email address
+                <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@gmail.com" required maxLength={254}/>
               </label>
               <label className="auth-label">Password
                 <div className="auth-password">
@@ -490,7 +548,7 @@ function App() {
   const contribution = (e: React.FormEvent) => { e.preventDefault(); const amount = Number(goalAmount); if (!selectedGoal || amount <= 0) return; saveGoals(goals.map(g => g.id === selectedGoal.id ? { ...g, saved: Math.max(0, Math.min(g.target, g.saved + amount)) } : g)); setSelectedGoal(null); setGoalAmount(''); notify('Goal progress updated') }
   const exportCsv = () => { const csv = ['Date,Description,Category,Type,Amount,Payment method', ...transactions.map(t => [t.date, `"${t.name.replaceAll('"', '""')}"`, t.category, t.type, t.amount, t.method].join(','))].join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'finsight-transactions.csv'; a.click(); URL.revokeObjectURL(a.href); notify('CSV downloaded') }
   const enterAccount = (next: Account) => { localStorage.setItem('finsight-account', JSON.stringify(next)); loadAccountData(next); setAccount(next) }
-  const enterDemo = () => { const demo: Account = { name: 'Dhruvi Mittal', email: 'dhruvimittalbsc24@rvu.edu.in', demo: true, mfaEnabled: false, avatarMode: 'initial' }; localStorage.setItem('finsight-account', JSON.stringify(demo)); loadAccountData(demo); setAccount(demo) }
+  const enterDemo = () => { const demo: Account = { name: 'Demo User', email: 'demo@finsight.app', demo: true, mfaEnabled: false, avatarMode: 'initial' }; localStorage.setItem('finsight-account', JSON.stringify(demo)); loadAccountData(demo); setAccount(demo) }
   const signOut = async () => { await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {}); localStorage.removeItem('finsight-account'); setAccount(null) }
   if (checkingSession) return <div className="auth-loading"><div className="brand-mark"><img src={`${import.meta.env.BASE_URL}finsight-mark.svg`} alt="" aria-hidden="true" /></div><div className="auth-skeleton" role="status" aria-label="Loading your FinSight portal"><span className="skeleton-line"/><span className="skeleton-line"/><span className="skeleton-line"/></div></div>
   if (!account) return <AuthScreen onDemo={enterDemo} onAccount={enterAccount}/>
@@ -511,7 +569,7 @@ function App() {
       {navGroups.map(group => <section className="nav-group" key={group.label}><p>{group.label}</p>{group.items.map(item => { const Icon = item.icon; return <button key={item.name} title={sidebarCollapsed ? item.name : undefined} aria-label={sidebarCollapsed ? item.name : undefined} data-tooltip={item.name} className={`nav-item ${page === item.name ? 'active' : ''}`} onClick={() => { setPage(item.name); setMobileNav(false) }}><Icon size={17}/><span>{item.name}</span>{item.name === 'FinSight AI' && <span className="nav-new">NEW</span>}</button> })}</section>)}
       <section className="nav-group"><p>PERSONAL</p><button className={`nav-item ${page === 'Notifications' ? 'active' : ''}`} title={sidebarCollapsed ? 'Notifications' : undefined} data-tooltip="Notifications" onClick={() => { setPage('Notifications'); setMobileNav(false) }}><Bell size={17}/><span>Notifications</span><i className="nav-dot"/></button><button className={`nav-item ${page === 'Settings' ? 'active' : ''}`} title={sidebarCollapsed ? 'Settings' : undefined} data-tooltip="Settings" onClick={() => { setPage('Settings'); setMobileNav(false) }}><Settings size={17}/><span>Settings</span></button></section>
       <div className="sidebar-spacer"/><div className="help-card"><div className="help-icon"><CircleHelp size={17}/></div><b>Money questions?</b><p>Your next good money habit starts here.</p><button onClick={() => { setPage('FinSight AI'); setMobileNav(false) }}>Ask FinSight AI <ArrowRight size={14}/></button></div>
-      <div className="profile-row"><div className="avatar" style={{ overflow: 'hidden' }}>{account.avatar && account.avatarMode === 'photo' ? <img src={account.avatar} alt={account.name} className="top-avatar-img"/> : (account.name?.trim() ? account.name.trim().charAt(0).toUpperCase() : 'D')}</div><span><b>{account.name || (account.demo ? 'Dhruvi Mittal' : 'Account profile')}</b><small>{account.email}</small></span></div><button className="sidebar-signout" onClick={() => void signOut()}><LogOut size={15}/> Sign out</button>
+      <div className="profile-row"><div className="avatar" style={{ overflow: 'hidden' }}>{account.avatar && account.avatarMode === 'photo' ? <img src={account.avatar} alt={account.name} className="top-avatar-img"/> : (account.name?.trim() ? account.name.trim().charAt(0).toUpperCase() : 'U')}</div><span><b>{account.name || 'Account profile'}</b><small>{account.email}</small></span></div><button className="sidebar-signout" onClick={() => void signOut()}><LogOut size={15}/> Sign out</button>
     </aside>
     {mobileNav && <button className="nav-backdrop" aria-label="Close navigation" onClick={() => setMobileNav(false)}/>}
     <main className="main-shell"><header className="topbar"><div className="top-left"><button className="icon-btn sidebar-toggle" title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'} aria-label={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'} aria-expanded={!sidebarCollapsed} aria-controls="primary-navigation" onClick={toggleNavigation}><Menu size={20}/></button><span className="breadcrumb">Pages <b>/</b> <strong>{page}</strong></span></div><div className="top-actions"><label className="searchbox"><Search size={16}/><input ref={globalSearchRef} value={query} onChange={e => { setQuery(e.target.value); if (e.target.value) setPage('Transactions') }} placeholder="Search transactions..."/><kbd>⌘ K</kbd></label><button className="icon-btn theme-button" aria-label="Toggle color theme" onClick={() => setDark(!dark)}>{dark ? <Sun size={18}/> : <Moon size={18}/>}</button><div className="notification-anchor"><button className="icon-btn notification-button" aria-label="View notifications" aria-expanded={notificationOpen} onClick={() => setNotificationOpen(open => !open)}><Bell size={18}/><i/></button>{notificationOpen && <div className="notification-popover"><div className="notification-popover-head"><div><b>Notifications</b><small>Updates from your activity</small></div><button className="icon-btn" aria-label="Close notifications" onClick={() => setNotificationOpen(false)}><X size={16}/></button></div><Notifications setPage={next => { setPage(next); setNotificationOpen(false) }} budgets={activeBudgets} bills={upcomingBills} goals={goals} transactions={transactions}/><button className="notification-all" onClick={() => { setPage('Notifications'); setNotificationOpen(false) }}>See all notifications <ArrowRight size={13}/></button></div>}</div><div className="top-divider"/><button className="top-avatar" title={`Signed in as ${account.name} (${account.email})`} onClick={() => setPage('Settings')}>{account.avatar && account.avatarMode === 'photo' ? <img src={account.avatar} alt={account.name} className="top-avatar-img"/> : (account.name ? account.name.charAt(0).toUpperCase() : 'D')}</button></div></header>
@@ -686,7 +744,7 @@ function MfaSettings({ account, notify }: { account: Account; notify: (s: string
 function SettingsPage({ account, onUpdateAccount, dark, setDark, exportCsv, notify, signOut }: { account: Account; onUpdateAccount?: (a: Account) => void; dark: boolean; setDark: (b: boolean) => void; exportCsv: () => void; notify: (s: string) => void; signOut: () => void }) {
   const [settingsTab, setSettingsTab] = useState<'profile' | 'gmail' | 'security' | 'preferences' | 'data'>('profile')
   const [currency, setCurrency] = useState(() => readStore('finsight-currency', 'INR'))
-  const [name, setName] = useState(account.name || 'Dhruvi Mittal')
+  const [name, setName] = useState(account.name || '')
   const [avatarMode, setAvatarMode] = useState<'initial' | 'photo'>(account.avatarMode || (account.avatar ? 'photo' : 'initial'))
   const [avatarUrl, setAvatarUrl] = useState(account.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80')
   const [billReminders, setBillReminders] = useState(() => readStore('finsight-bill-reminders-enabled', true))
@@ -847,7 +905,7 @@ function SettingsPage({ account, onUpdateAccount, dark, setDark, exportCsv, noti
               <div>
                 <b>Connected to Gmail</b>
                 <span style={{ display: 'block', fontSize: '11px', color: 'var(--subtle)' }}>
-                  {account.email || 'dhruvimittalbsc24@rvu.edu.in'}
+                  {account.email || 'Connected Gmail address'}
                 </span>
               </div>
             </div>

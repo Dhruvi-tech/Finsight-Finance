@@ -158,7 +158,7 @@ The FinSight platform has been upgraded with an ultra-premium visual design syst
 
 ## 🔐 Google Account Chooser, Gmail 2FA Security & Modular Settings (v2.5 Upgrade)
 
-- **Interactive Google Account Picker Dialog:** Seamless account chooser offering instant profile selection (`Dhruvi Mittal` with Google photo, `Dhruvi Tech` with initial 'D', or custom account), automatically selecting and binding the user's avatar initial or profile photo.
+- **Official Google Account Sign-In & Multi-Account Chooser:** Authentic Google sign-in dialog asking for full name, Gmail, and password, caching browser accounts for seamless multi-account selection with dynamic avatar initial or photo synchronization.
 - **Gmail 2-Step Verification (2FA):** 6-digit security code dispatched to Gmail on sign-in with live verification banner, one-click autofill, and resend support.
 - **Modular Tabbed Settings Navigation:** Independent dedicated views for:
   - 👤 **Your Profile:** Dynamic photo/initial toggle (`D`), name & email controls, sign out.
