@@ -96,3 +96,22 @@ npm run build
 <div align="center">
   <sub>© 2026 FinSight · Crafted with care for your next money move.</sub>
 </div>
+
+
+---
+
+## ✨ Premium Experience & Visual System (v2.4 Upgrade)
+
+The FinSight platform has been upgraded with an ultra-premium visual design system engineered for financial clarity, sensory elegance, and fluid micro-interactions:
+
+- **Ambient Glowing Particle Atmosphere:** Dynamic floating luminous gradient orbs and twinkling star particles (`✦`) creating depth while maintaining lightweight performance.
+- **Next-Gen Frosted Glassmorphism:** High-precision backdrop blurs (`backdrop-filter: blur(16px - 20px)`) across all dashboard cards, navigation panels, modal overlays, and quick-add surfaces with subtle translucent borders.
+- **Luminous Interactive Charts:** Multi-stop area gradients for cashflow visualization with drop-shadow glow filters, animated active radar dots, and custom glassmorphic floating tooltips displaying real-time financial stats.
+- **Dynamic Micro-Interactions & Shimmers:**
+  - 3D hover elevation and gentle scale transitions on metric cards, goal blocks, and budget categories.
+  - Continuous diagonal light-sweep shimmer animations across primary call-to-action buttons.
+  - Multi-stop gradient shimmer animations across budget progress bars and savings metrics.
+  - Rotating dual-ring dashed orbital tracks for active savings goal targets.
+  - Breathing radar indicators for live financial feeds and holographic badge effects for FinSight AI.
+- **Full Sidebar Auto-Retraction & Smooth Reflow:** Seamless zero-width sidebar toggling via `☰` and `✕` with fluid width and margin transitions ensuring 100% full-screen canvas expansion.
+- **Verified Production Deployment:** Fully optimized Vite production bundles deployed directly to Render with automated CI validation.

@@ -168,6 +168,16 @@ function App() {
   if (checkingSession) return <div className="auth-loading"><div className="brand-mark"><img src={`${import.meta.env.BASE_URL}finsight-mark.svg`} alt="" aria-hidden="true" /></div><div className="auth-skeleton" role="status" aria-label="Loading your FinSight portal"><span className="skeleton-line"/><span className="skeleton-line"/><span className="skeleton-line"/></div></div>
   if (!account) return <AuthScreen onDemo={enterDemo} onAccount={enterAccount}/>
   return <div className={`app ${dark ? 'dark' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div className="ambient-background" aria-hidden="true">
+      <div className="ambient-orb orb-1"/>
+      <div className="ambient-orb orb-2"/>
+      <div className="ambient-orb orb-3"/>
+      <div className="sparkle-particle sp-1">✦</div>
+      <div className="sparkle-particle sp-2">✦</div>
+      <div className="sparkle-particle sp-3">✦</div>
+      <div className="sparkle-particle sp-4">✦</div>
+      <div className="sparkle-particle sp-5">✦</div>
+    </div>
     <aside id="primary-navigation" className={`sidebar ${mobileNav ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`} aria-label="Primary navigation">
       <div className="brand"><div className="brand-mark"><img src={`${import.meta.env.BASE_URL}finsight-mark.svg`} alt="" aria-hidden="true" /></div><div><b>finsight</b><small>PERSONAL FINANCE</small></div><button className="icon-btn side-close" title="Close sidebar" aria-label="Close sidebar" onClick={closeSidebar}><X size={17}/></button></div>
       <div className="workspace-label" title={sidebarCollapsed ? 'Workspace' : undefined}><span>WORKSPACE</span><ChevronDown size={13}/></div>
