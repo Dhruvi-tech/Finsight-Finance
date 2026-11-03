@@ -25,6 +25,7 @@ const localDateISO = (date: Date) => `${date.getFullYear()}-${String(date.getMon
 const money = (n: number) => { let currency='INR'; try{currency=localStorage.getItem('finsight-currency')||'INR'}catch{}; return new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:0}).format(Math.round(n)) }
 const shortDate = (s: string) => new Date(`${s}T12:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 function readStore<T>(key: string, fallback: T): T { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) as T : fallback } catch { return fallback } }
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://finsight-api.onrender.com' : '')
 type Account = { id?: string; name: string; email: string; currency?: string; mfaEnabled?: boolean; demo?: boolean }
 function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (account: Account) => void }) {
   const [mode, setMode] = useState<'login' | 'signup'>('signup')
@@ -37,13 +38,13 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [apiReady, setApiReady] = useState<boolean | null>(null)
-  useEffect(() => { fetch(`${import.meta.env.VITE_API_URL || ''}/api/health`).then(async response => { if (!response.ok) return false; const health = await response.json().catch(() => null); return health?.status === 'ok' && health?.database === 'connected' }).then(setApiReady).catch(() => setApiReady(false)) }, [])
+  useEffect(() => { fetch(`${API_BASE}/api/health`).then(async response => { if (!response.ok) return false; const health = await response.json().catch(() => null); return health?.status === 'ok' && health?.database === 'connected' }).then(setApiReady).catch(() => setApiReady(false)) }, [])
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setError('')
     if (mode === 'signup' && password.length < 10) { setError('Use at least 10 characters for your password.'); return }
     setBusy(true)
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/${mode === 'signup' ? 'register' : 'login'}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mode === 'signup' ? { name, email, password } : { email, password }) })
+      const response = await fetch(`${API_BASE}/api/auth/${mode === 'signup' ? 'register' : 'login'}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mode === 'signup' ? { name, email, password } : { email, password }) })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(body.error || 'Account service is unavailable. Configure the API and database, then try again.')
       if (body.mfaRequired) { setMfaRequired(true); setPassword(''); setCode(''); return }
@@ -53,7 +54,7 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
   const verifyMfa = async (event: React.FormEvent) => {
     event.preventDefault(); setError(''); setBusy(true)
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/mfa/verify`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) })
+      const response = await fetch(`${API_BASE}/api/auth/mfa/verify`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(body.error || 'That verification code did not match.')
       onAccount(body.user)
@@ -72,7 +73,7 @@ function App() {
   const [budgets, setBudgets] = useState<Budget[]>(() => readStore(dataKey('budgets'), []))
   const [bills, setBills] = useState<Bill[]>(() => readStore(dataKey('bills'), []))
   const loadAccountData = (next: Account) => { const key = (name: string) => `finsight-account-${encodeURIComponent(next.email)}-${name}`; setTransactions(readStore(key('transactions'), [])); setGoals(readStore(key('goals'), [])); setBudgets(readStore(key('budgets'), [])); setBills(readStore(key('bills'), [])) }
-  useEffect(() => { fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/me`, { credentials: 'include' }).then(async response => { if (response.ok) { const body = await response.json(); setAccount(body.user); localStorage.setItem('finsight-account', JSON.stringify(body.user)); loadAccountData(body.user) } }).catch(() => {}).finally(() => setCheckingSession(false)) }, [])
+  useEffect(() => { fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' }).then(async response => { if (response.ok) { const body = await response.json(); setAccount(body.user); localStorage.setItem('finsight-account', JSON.stringify(body.user)); loadAccountData(body.user) } }).catch(() => {}).finally(() => setCheckingSession(false)) }, [])
   useEffect(() => { const prior = readStore<Account & { demo?: boolean } | null>('finsight-account', null); if (prior?.demo) { ['finsight-account','finsight-transactions','finsight-goals','finsight-budgets','finsight-bills'].forEach(key => localStorage.removeItem(key)) } }, [])
   const [showModal, setShowModal] = useState(false)
   const [query, setQuery] = useState('')
@@ -164,7 +165,7 @@ function App() {
   const exportCsv = () => { const csv = ['Date,Description,Category,Type,Amount,Payment method', ...transactions.map(t => [t.date, `"${t.name.replaceAll('"', '""')}"`, t.category, t.type, t.amount, t.method].join(','))].join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'finsight-transactions.csv'; a.click(); URL.revokeObjectURL(a.href); notify('CSV downloaded') }
   const enterAccount = (next: Account) => { localStorage.setItem('finsight-account', JSON.stringify(next)); loadAccountData(next); setAccount(next) }
   const enterDemo = () => { const demo: Account = { name: 'Demo account', email: 'demo@finsight.local', demo: true, mfaEnabled: false }; localStorage.setItem('finsight-account', JSON.stringify(demo)); loadAccountData(demo); setAccount(demo) }
-  const signOut = async () => { await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {}); localStorage.removeItem('finsight-account'); setAccount(null) }
+  const signOut = async () => { await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {}); localStorage.removeItem('finsight-account'); setAccount(null) }
   if (checkingSession) return <div className="auth-loading"><div className="brand-mark"><img src={`${import.meta.env.BASE_URL}finsight-mark.svg`} alt="" aria-hidden="true" /></div><div className="auth-skeleton" role="status" aria-label="Loading your FinSight portal"><span className="skeleton-line"/><span className="skeleton-line"/><span className="skeleton-line"/></div></div>
   if (!account) return <AuthScreen onDemo={enterDemo} onAccount={enterAccount}/>
   return <div className={`app ${dark ? 'dark' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
@@ -291,7 +292,7 @@ function MfaSettings({ account, notify }: { account: Account; notify: (s: string
   const [disableCode, setDisableCode] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const api = `${import.meta.env.VITE_API_URL || ''}/api/auth/mfa`
+  const api = `${API_BASE}/api/auth/mfa`
   const request = async (path: string, body?: unknown) => {
     const response = await fetch(`${api}/${path}`, {
       method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },

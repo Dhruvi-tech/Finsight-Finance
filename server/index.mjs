@@ -13,18 +13,35 @@ import { createRecoveryCodes, decryptSecret, encodeBase32, encryptSecret, hashRe
 
 const app = express()
 const isProduction = process.env.NODE_ENV === 'production'
-const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173'
+const allowedOrigins = [
+  process.env.CLIENT_ORIGIN,
+  'https://finsight-personal-finance.onrender.com',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+].filter(Boolean)
 const jwtSecret = process.env.JWT_SECRET
 const cookieOptions = { httpOnly: true, secure: isProduction, sameSite: isProduction ? 'none' : 'lax', path: '/', maxAge: 1000 * 60 * 60 * 24 * 7 }
 const mfaChallengeOptions = { ...cookieOptions, path: '/api/auth/mfa', maxAge: 5 * 60 * 1000 }
 
 app.disable('x-powered-by')
 app.use(helmet())
-app.use(cors({ origin: clientOrigin, credentials: true, methods: ['GET', 'POST', 'PATCH', 'DELETE'] }))
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
+    callback(null, false)
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE']
+}))
 app.use(express.json({ limit: '32kb' }))
 app.use(cookieParser())
 app.use((req, res, next) => {
-  if (['POST', 'PATCH', 'DELETE'].includes(req.method) && req.get('origin') !== clientOrigin) return res.status(403).json({ error: 'Request origin is not allowed.' })
+  if (['POST', 'PATCH', 'DELETE'].includes(req.method)) {
+    const origin = req.get('origin')
+    if (origin && !allowedOrigins.includes(origin)) {
+      return res.status(403).json({ error: 'Request origin is not allowed.' })
+    }
+  }
   next()
 })
 

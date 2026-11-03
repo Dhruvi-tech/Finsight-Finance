@@ -5,6 +5,9 @@ services:
     buildCommand: npm ci && npm ci --prefix client && npm --prefix client run build
     staticPublishPath: ./client/dist
     autoDeployTrigger: checksPass
+    envVars:
+      - key: VITE_API_URL
+        value: https://finsight-api.onrender.com
     routes:
       - type: rewrite
         source: /*

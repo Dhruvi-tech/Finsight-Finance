@@ -7,6 +7,7 @@ client/.env
 !.env.example
 client/.env.*
 !client/.env.example
+!client/.env.production
 coverage/
 .DS_Store
 Thumbs.db
