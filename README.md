@@ -17,6 +17,7 @@ FinSight is a student-oriented personal finance experience for understanding eve
 - Bills and calendar reminders, notifications, report preview, profile preferences, theme toggle, and sign-out control.
 - Responsive layouts for desktop, tablet, and mobile.
 - Sign-up and sign-in screens using email/password, with clear API readiness feedback and password visibility control.
+- Optional authenticator-app MFA with single-use recovery codes and a second sign-in step.
 
 ## Architecture
 

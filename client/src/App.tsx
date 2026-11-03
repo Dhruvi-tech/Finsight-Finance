@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowDownLeft, ArrowLeft, ArrowRight, ArrowUpRight, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, CirclePlus, CreditCard, Download, Ellipsis, Eye, EyeOff, FileText, Heart, LayoutDashboard, Lightbulb, LogOut, Menu, Moon, MoreHorizontal, Plus, Pencil, Search, Settings, ShieldCheck, Trash2, Sparkles, Sun, Target, TrendingDown, TrendingUp, X, Zap } from 'lucide-react'
+import { Activity, ArrowDownLeft, ArrowLeft, ArrowRight, ArrowUpRight, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, CirclePlus, Copy, CreditCard, Download, Ellipsis, Eye, EyeOff, FileText, Heart, LayoutDashboard, Lightbulb, LogOut, Menu, Moon, MoreHorizontal, Plus, Pencil, Search, Settings, ShieldCheck, Trash2, Sparkles, Sun, Target, TrendingDown, TrendingUp, X, Zap } from 'lucide-react'
 import { categoryTotals, healthScore, monthlyTotals } from './finance.js'
 const FinanceChart = lazy(() => import('./FinanceCharts'))
 import './App.css'
@@ -19,12 +19,14 @@ const APP_TODAY = new Date()
 const money = (n: number) => { let currency='INR'; try{currency=localStorage.getItem('finsight-currency')||'INR'}catch{}; return new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:0}).format(Math.round(n)) }
 const shortDate = (s: string) => new Date(`${s}T12:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 function readStore<T>(key: string, fallback: T): T { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) as T : fallback } catch { return fallback } }
-type Account = { name: string; email: string }
-function AuthScreen({ onAccount }: { onAccount: (account: Account) => void }) {
+type Account = { id?: string; name: string; email: string; currency?: string; mfaEnabled?: boolean; demo?: boolean }
+function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (account: Account) => void }) {
   const [mode, setMode] = useState<'login' | 'signup'>('signup')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
+  const [mfaRequired, setMfaRequired] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -38,10 +40,21 @@ function AuthScreen({ onAccount }: { onAccount: (account: Account) => void }) {
       const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/${mode === 'signup' ? 'register' : 'login'}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mode === 'signup' ? { name, email, password } : { email, password }) })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(body.error || 'Account service is unavailable. Configure the API and database, then try again.')
+      if (body.mfaRequired) { setMfaRequired(true); setPassword(''); setCode(''); return }
       onAccount(body.user)
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not reach the account service.') } finally { setBusy(false) }
   }
-  return <div className="auth-screen"><div className="auth-side"><div className="auth-brand"><div className="brand-mark"><span>f</span></div><div><b>finsight</b><small>PERSONAL FINANCE</small></div></div><div className="auth-copy"><span className="eyebrow">A CLEARER VIEW OF YOUR MONEY</span><h1>Make room for<br/>what matters.</h1><p>Bring your spending, savings and plans into focus, one small step at a time.</p><div className="auth-preview"><div className="auth-preview-top"><span>YOUR FINANCE SPACE</span><ShieldCheck size={14}/></div><h2>One clear place for your money.</h2><p>Your overview will fill in as you add your own transactions, goals, and bills.</p><div className="auth-preview-empty"><span>+</span><b>Start with your first entry</b></div></div></div><div className="auth-side-foot"><ShieldCheck size={14}/> Private by design · No bank connection required</div></div><main className="auth-main"><div className="auth-card"><div className="auth-mobile-brand"><div className="brand-mark"><span>f</span></div><b>finsight</b></div><span className="eyebrow">YOUR MONEY, IN BETTER FOCUS</span><h2>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h2><p className="auth-subtitle">{mode === 'signup' ? 'Start building a calmer money routine.' : 'Sign in to pick up where you left off.'}</p><div className="auth-tabs"><button className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setError('') }}>Create account</button><button className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setError('') }}>Sign in</button></div><form onSubmit={submit}>{mode === 'signup' && <label className="auth-label">Full name<input autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required maxLength={80}/></label>}<label className="auth-label">Email address<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required maxLength={254}/></label><label className="auth-label">Password<div className="auth-password"><input type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === 'signup' ? 'At least 10 characters' : 'Your password'} required maxLength={128} minLength={mode === 'signup' ? 10 : 1}/><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={15}/> : <Eye size={15}/>}</button></div></label>{error && <div className="auth-error" role="alert">{error}</div>}<button className="auth-submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'signup' ? 'Create my account' : 'Sign in'}<ArrowRight size={16}/></button></form><p className="auth-note">{apiReady === true ? 'Email sign-in is ready.' : apiReady === false ? 'Account service is unavailable. Configure the API and database to continue.' : 'Checking account service…'}</p><p className="auth-terms">Create an account to keep your profile. Your finance entries are currently stored in this browser.</p></div><div className="auth-main-foot">FinSight · See Your Money. Understand Your Future.</div></main></div>
+  const verifyMfa = async (event: React.FormEvent) => {
+    event.preventDefault(); setError(''); setBusy(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/mfa/verify`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(body.error || 'That verification code did not match.')
+      onAccount(body.user)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not verify your code.') } finally { setBusy(false) }
+  }
+  const switchMode = (next: 'login' | 'signup') => { setMode(next); setMfaRequired(false); setCode(''); setError('') }
+  return <div className="auth-screen"><div className="auth-side"><div className="auth-brand"><div className="brand-mark"><span>f</span></div><div><b>finsight</b><small>PERSONAL FINANCE</small></div></div><div className="auth-copy"><span className="eyebrow">A CLEARER VIEW OF YOUR MONEY</span><h1>Make room for<br/>what matters.</h1><p>Bring your spending, savings and plans into focus, one small step at a time.</p><div className="auth-preview"><div className="auth-preview-top"><span>YOUR FINANCE SPACE</span><ShieldCheck size={14}/></div><h2>One clear place for your money.</h2><p>Your overview will fill in as you add your own transactions, goals, and bills.</p><div className="auth-preview-empty"><span>+</span><b>Start with your first entry</b></div></div></div><div className="auth-side-foot"><ShieldCheck size={14}/> Private by design · No bank connection required</div></div><main className="auth-main"><div className="auth-card"><div className="auth-mobile-brand"><div className="brand-mark"><span>f</span></div><b>finsight</b></div><span className="eyebrow">YOUR MONEY, IN BETTER FOCUS</span><h2>{mfaRequired ? 'Verify it’s you' : mode === 'signup' ? 'Create your account' : 'Welcome back'}</h2><p className="auth-subtitle">{mfaRequired ? 'Enter a code from your authenticator app or use a recovery code.' : mode === 'signup' ? 'Start building a calmer money routine.' : 'Sign in to pick up where you left off.'}</p>{!mfaRequired && <div className="auth-tabs"><button className={mode === 'signup' ? 'active' : ''} onClick={() => switchMode('signup')}>Create account</button><button className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')}>Sign in</button></div>}{mfaRequired ? <form onSubmit={verifyMfa}><label className="auth-label">Authenticator or recovery code<input autoComplete="one-time-code" inputMode="text" autoCapitalize="characters" value={code} onChange={e => setCode(e.target.value.replace(/[-\s]/gu, '').toUpperCase())} placeholder="6-digit or recovery code" required maxLength={16}/></label>{error && <div className="auth-error" role="alert">{error}</div>}<button className="auth-submit" disabled={busy}>{busy ? 'Please wait…' : 'Verify and sign in'}<ArrowRight size={16}/></button><button className="auth-back-link" type="button" onClick={() => switchMode('login')}>Back to sign in</button></form> : <><form onSubmit={submit}>{mode === 'signup' && <label className="auth-label">Full name<input autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required maxLength={80}/></label>}<label className="auth-label">Email address<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required maxLength={254}/></label><label className="auth-label">Password<div className="auth-password"><input type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === 'signup' ? 'At least 10 characters' : 'Your password'} required maxLength={128} minLength={mode === 'signup' ? 10 : 1}/><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={15}/> : <Eye size={15}/>}</button></div></label>{error && <div className="auth-error" role="alert">{error}</div>}<button className="auth-submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'signup' ? 'Create my account' : 'Sign in'}<ArrowRight size={16}/></button></form>{mode === 'login' && <div className="demo-link-row"><button type="button" className="auth-demo-link" onClick={onDemo}>Try demo sign-in</button></div>}<p className="auth-note">{apiReady === true ? 'Email sign-in is ready.' : apiReady === false ? 'Account service is unavailable. Demo sign-in remains available.' : 'Checking account service…'}</p><p className="auth-terms">Create an account to keep your profile. Finance entries are stored in this browser.</p></>}</div><div className="auth-main-foot">FinSight · See Your Money. Understand Your Future.</div></main></div>
 }
 function App() {
   const [account, setAccount] = useState<Account | null>(() => { const saved = readStore<(Account & { demo?: boolean }) | null>('finsight-account', null); return saved?.demo ? null : saved })
@@ -96,9 +109,10 @@ function App() {
   const contribution = (e: React.FormEvent) => { e.preventDefault(); const amount = Number(goalAmount); if (!selectedGoal || amount <= 0) return; saveGoals(goals.map(g => g.id === selectedGoal.id ? { ...g, saved: Math.max(0, Math.min(g.target, g.saved + amount)) } : g)); setSelectedGoal(null); setGoalAmount(''); notify('Goal progress updated') }
   const exportCsv = () => { const csv = ['Date,Description,Category,Type,Amount,Payment method', ...transactions.map(t => [t.date, `"${t.name.replaceAll('"', '""')}"`, t.category, t.type, t.amount, t.method].join(','))].join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'finsight-transactions.csv'; a.click(); URL.revokeObjectURL(a.href); notify('CSV downloaded') }
   const enterAccount = (next: Account) => { localStorage.setItem('finsight-account', JSON.stringify(next)); loadAccountData(next); setAccount(next) }
+  const enterDemo = () => { const demo: Account = { name: 'Demo account', email: 'demo@finsight.local', demo: true, mfaEnabled: false }; localStorage.setItem('finsight-account', JSON.stringify(demo)); loadAccountData(demo); setAccount(demo) }
   const signOut = async () => { await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {}); localStorage.removeItem('finsight-account'); setAccount(null) }
   if (checkingSession) return <div className="auth-loading"><div className="brand-mark"><span>f</span></div>Opening your FinSight portal…</div>
-  if (!account) return <AuthScreen onAccount={enterAccount}/>
+  if (!account) return <AuthScreen onDemo={enterDemo} onAccount={enterAccount}/>
   return <div className={`app ${dark ? 'dark' : ''}`}>
     <aside className={`sidebar ${mobileNav ? 'open' : ''}`}>
       <div className="brand"><div className="brand-mark"><span>f</span></div><div><b>finsight</b><small>PERSONAL FINANCE</small></div><button className="icon-btn side-close" aria-label="Close menu" onClick={() => setMobileNav(false)}><X size={17}/></button></div>
@@ -106,11 +120,11 @@ function App() {
       {navGroups.map(group => <section className="nav-group" key={group.label}><p>{group.label}</p>{group.items.map(item => { const Icon = item.icon; return <button key={item.name} className={`nav-item ${page === item.name ? 'active' : ''}`} onClick={() => { setPage(item.name); setMobileNav(false) }}><Icon size={17}/><span>{item.name}</span>{item.name === 'FinSight AI' && <span className="nav-new">NEW</span>}</button> })}</section>)}
       <section className="nav-group"><p>PERSONAL</p><button className={`nav-item ${page === 'Notifications' ? 'active' : ''}`} onClick={() => setPage('Notifications')}><Bell size={17}/><span>Notifications</span><i className="nav-dot"/></button><button className={`nav-item ${page === 'Settings' ? 'active' : ''}`} onClick={() => setPage('Settings')}><Settings size={17}/><span>Settings</span></button></section>
       <div className="sidebar-spacer"/><div className="help-card"><div className="help-icon"><CircleHelp size={17}/></div><b>Money questions?</b><p>Your next good money habit starts here.</p><button onClick={() => setPage('FinSight AI')}>Ask FinSight AI <ArrowRight size={14}/></button></div>
-      <div className="profile-row"><div className="avatar">{(account.name[0] || 'F').toUpperCase()}</div><span><b>{account.name}</b><small>{account.email}</small></span></div><button className="sidebar-signout" onClick={() => void signOut()}><LogOut size={15}/> Sign out</button>
+      <div className="profile-row"><div className="avatar">F</div><span><b>{account.demo ? 'Demo account' : 'Account profile'}</b><small>{account.demo ? 'Local preview' : account.email}</small></span></div><button className="sidebar-signout" onClick={() => void signOut()}><LogOut size={15}/> Sign out</button>
     </aside>
     {mobileNav && <button className="nav-backdrop" aria-label="Close navigation" onClick={() => setMobileNav(false)}/>}
-    <main className="main-shell"><header className="topbar"><div className="top-left"><button className="icon-btn mobile-menu" aria-label="Open navigation" onClick={() => setMobileNav(true)}><Menu size={20}/></button><span className="breadcrumb">Pages <b>/</b> <strong>{page}</strong></span></div><div className="top-actions"><label className="searchbox"><Search size={16}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search anything..."/><kbd>⌘ K</kbd></label><button className="icon-btn theme-button" aria-label="Toggle color theme" onClick={() => setDark(!dark)}>{dark ? <Sun size={18}/> : <Moon size={18}/>}</button><button className="icon-btn notification-button" aria-label="View notifications" onClick={() => setPage('Notifications')}><Bell size={18}/><i/></button><div className="top-divider"/><button className="top-avatar" onClick={() => setPage('Settings')}>{(account.name[0] || 'F').toUpperCase()}</button></div></header>
-      <div className="content"><div className="page-heading"><div><div className="eyebrow">{APP_TODAY.toLocaleDateString('en-IN',{weekday:'long',month:'long',day:'numeric',year:'numeric'}).toUpperCase()} </div><h1>{page === 'Overview' ? `Good morning, ${account.name.split(' ')[0]}` : page}<span className="wave">{page === 'Overview' ? ' ✦' : ''}</span></h1><p className="subhead">{page === 'Overview' ? 'Here’s your money, making a little more sense.' : pageSubtitle(page)}</p></div><div className="heading-actions">{page === 'Overview' && <button className="outline-btn" onClick={exportCsv}><Download size={15}/> Export</button>}<button className="primary-btn" onClick={() => setShowModal(true)}><Plus size={17}/> Add transaction</button></div></div>
+    <main className="main-shell"><header className="topbar"><div className="top-left"><button className="icon-btn mobile-menu" aria-label="Open navigation" onClick={() => setMobileNav(true)}><Menu size={20}/></button><span className="breadcrumb">Pages <b>/</b> <strong>{page}</strong></span></div><div className="top-actions"><label className="searchbox"><Search size={16}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search anything..."/><kbd>⌘ K</kbd></label><button className="icon-btn theme-button" aria-label="Toggle color theme" onClick={() => setDark(!dark)}>{dark ? <Sun size={18}/> : <Moon size={18}/>}</button><button className="icon-btn notification-button" aria-label="View notifications" onClick={() => setPage('Notifications')}><Bell size={18}/><i/></button><div className="top-divider"/><button className="top-avatar" onClick={() => setPage('Settings')}>F</button></div></header>
+      <div className="content"><div className="page-heading"><div><div className="eyebrow">{APP_TODAY.toLocaleDateString('en-IN',{weekday:'long',month:'long',day:'numeric',year:'numeric'}).toUpperCase()} </div><h1>{page === 'Overview' ? 'Your money at a glance' : page}<span className="wave">{page === 'Overview' ? ' ✦' : ''}</span></h1><p className="subhead">{page === 'Overview' ? 'Here’s your money, making a little more sense.' : pageSubtitle(page)}</p></div><div className="heading-actions">{page === 'Overview' && <button className="outline-btn" onClick={exportCsv}><Download size={15}/> Export</button>}<button className="primary-btn" onClick={() => setShowModal(true)}><Plus size={17}/> Add transaction</button></div></div>
         {page === 'Overview' && transactions.length === 0 && <section className="panel welcome-empty"><div className="welcome-empty-icon"><Plus size={20}/></div><div><h2>Your finance space is ready</h2><p>Add your first transaction to start seeing your spending patterns and monthly progress here.</p></div><button className="primary-btn" onClick={() => setShowModal(true)}>Add first transaction <ArrowRight size={15}/></button></section>}
         {page === 'Overview' && <Overview balance={balance} income={monthIncome} expenses={monthExpense} savingsRate={savingsRate} expenseComparison={expenseComparison} previousExpenses={previousSummary.expenses} score={score} transactions={displayTransactions} goals={goals} bills={upcomingBills} categories={monthCategories} budgets={activeBudgets} months={chartMonths} range={range} setRange={setRange} openGoal={setSelectedGoal} deleteTx={deleteTx} editTx={editTx} setPage={setPage} />}
         {page === 'Transactions' && <Transactions transactions={transactions} query={query} setQuery={setQuery} openModal={() => { setEditingTx(null); setShowModal(true) }} remove={deleteTx} edit={editTx} exportCsv={exportCsv} />}
@@ -121,7 +135,7 @@ function App() {
         {page === 'Calendar & bills' && <CalendarBills bills={bills} saveBills={saveBills} notify={notify} />}
         {page === 'Reports' && <Reports transactions={transactions} exportCsv={exportCsv} income={monthIncome} expenses={monthExpense} />}
         {page === 'Notifications' && <Notifications setPage={setPage} budgets={activeBudgets} bills={upcomingBills} goals={goals} transactions={transactions} />}
-        {page === 'Settings' && <SettingsPage account={account} dark={dark} setDark={setDark} exportCsv={exportCsv} notify={notify} />}
+        {page === 'Settings' && <SettingsPage account={account} dark={dark} setDark={setDark} exportCsv={exportCsv} notify={notify} signOut={() => void signOut()} />}
         <footer className="footer"><span>© 2026 FinSight · Made for your next money move</span><span><ShieldCheck size={13}/> Your data stays yours <span className="footer-sep">·</span> Signed in</span></footer>
       </div>
     </main>
@@ -179,8 +193,77 @@ function Notifications({setPage,budgets,bills,goals,transactions}:{setPage:(s:st
   if(!items.length)items.push({icon:<Sparkles size={16}/>,tint:'purple',title:'Your monthly recap is ready',body:`${transactions.length} records are saved in this browser. Your totals update as you log activity.`,time:'Monthly summary',link:'Analytics'})
   return <div className="panel notification-list">{items.map((n,i)=><button className="notification-row" key={`${n.title}-${i}`} onClick={()=>setPage(n.link)}><div className={`notify-icon ${n.tint}`}>{n.icon}</div><div><b>{n.title}</b><p>{n.body}</p><small>{n.time}</small></div><i className="notify-unread"/><ChevronRight size={16}/></button>)}</div>
 }
-function SettingsPage({account,dark,setDark,exportCsv,notify}:{account:Account;dark:boolean;setDark:(b:boolean)=>void;exportCsv:()=>void;notify:(s:string)=>void}) {
-  const [currency,setCurrency]=useState(()=>readStore('finsight-currency','INR'))
-  return <div className="settings-layout"><div className="settings-nav panel">{['Your profile','Preferences','Notifications','Data & privacy'].map((x,i)=><button className={i===0?'active':''} key={x}><span>{[<div className="avatar small" key="profile">{account.name[0]}</div>,<Settings size={16} key="preferences"/>,<Bell size={16} key="notifications"/>,<ShieldCheck size={16} key="privacy"/>][i]}</span>{x}<ChevronRight size={14}/></button>)}</div><div className="settings-content panel"><div className="settings-section"><span className="eyebrow">YOUR PROFILE</span><div className="profile-edit"><div className="avatar big">{account.name[0]}</div><div><b>{account.name}</b><span>Email account</span></div><button className="outline-btn" onClick={()=>notify('Profile editing is not available yet')}>Edit profile</button></div><label className="field-label">Email address<input value={account.email} readOnly/></label><div className="settings-field"><div><b>Default currency</b><span>Choose a display currency. Values are not converted.</span></div><select value={currency} onChange={e=>{setCurrency(e.target.value);localStorage.setItem('finsight-currency',e.target.value)}}><option value="INR">INR · ₹</option><option value="USD">USD · $</option><option value="EUR">EUR · €</option><option value="GBP">GBP · £</option></select></div></div><div className="settings-section"><span className="eyebrow">APPEARANCE</span><div className="settings-field"><div><b>Dark appearance</b><span>Choose a softer look for evening check-ins.</span></div><button className={`switch ${dark?'on':''}`} onClick={()=>setDark(!dark)} aria-label="Toggle dark appearance"><i/></button></div></div><div className="settings-section"><span className="eyebrow">YOUR DATA</span><div className="settings-field"><div><b>Export your activity</b><span>Download a copy of the transactions in this browser.</span></div><button className="outline-btn" onClick={exportCsv}><Download size={14}/> Export CSV</button></div></div><div className="settings-footnote"><ShieldCheck size={15}/> Finance records are stored in this browser in the current MVP. No bank accounts are connected.</div></div></div>
+function MfaSettings({ account, notify }: { account: Account; notify: (s: string) => void }) {
+  const [enabled, setEnabled] = useState(Boolean(account.mfaEnabled))
+  const [setup, setSetup] = useState<{ secret: string; otpauthUrl: string } | null>(null)
+  const [setupPassword, setSetupPassword] = useState('')
+  const [setupCode, setSetupCode] = useState('')
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([])
+  const [disableOpen, setDisableOpen] = useState(false)
+  const [password, setPassword] = useState('')
+  const [disableCode, setDisableCode] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const api = `${import.meta.env.VITE_API_URL || ''}/api/auth/mfa`
+  const request = async (path: string, body?: unknown) => {
+    const response = await fetch(`${api}/${path}`, {
+      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    })
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(result.error || 'The security request failed.')
+    return result
+  }
+  const begin = async () => {
+    setBusy(true); setError('')
+    try { setSetup(await request('setup', { password: setupPassword })); setSetupPassword('') }
+    catch (e) { setError(e instanceof Error ? e.message : 'Could not start MFA setup.') }
+    finally { setBusy(false) }
+  }
+  const confirm = async (event: React.FormEvent) => {
+    event.preventDefault(); setBusy(true); setError('')
+    try {
+      const result = await request('confirm', { code: setupCode })
+      setEnabled(true); setRecoveryCodes(result.recoveryCodes || []); setSetup(null); setSetupCode('')
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not verify the authenticator code.') }
+    finally { setBusy(false) }
+  }
+  const disable = async (event: React.FormEvent) => {
+    event.preventDefault(); setBusy(true); setError('')
+    try {
+      await request('disable', { password, code: disableCode })
+      setEnabled(false); setRecoveryCodes([]); setDisableOpen(false); setDisableCode(''); setPassword('')
+      notify('Two-factor authentication turned off.')
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not turn off MFA.') }
+    finally { setBusy(false) }
+  }
+  const copyCodes = async () => {
+    try { await navigator.clipboard.writeText(recoveryCodes.join('\n')); notify('Recovery codes copied') }
+    catch { setError('Clipboard access was unavailable. Copy the codes manually.') }
+  }
+  return <div className="settings-section">
+    <span className="eyebrow">TWO-FACTOR AUTHENTICATION</span>
+    <div className="settings-field"><div><b>Authenticator app</b><span>{enabled ? 'Enabled · verification required at sign-in' : 'Add a second step when you sign in.'}</span></div>{!account.demo && <span className={`mfa-status ${enabled ? 'enabled' : ''}`}>{enabled ? 'ON' : 'OFF'}</span>}</div>
+    {account.demo ? <p className="mfa-hint">Sign in to a full account to configure authenticator security.</p> : !enabled && !setup && <form className="mfa-start" onSubmit={event => { event.preventDefault(); void begin() }}><label className="field-label">Confirm your password to begin<input type="password" autoComplete="current-password" value={setupPassword} onChange={e => setSetupPassword(e.target.value)} required/></label><button className="outline-btn mfa-action" disabled={busy}>{busy ? 'Preparing…' : 'Set up authenticator'}</button></form>}
+    {setup && <div className="mfa-setup"><p>In your authenticator app, add an account manually with this key, or open the setup link on a device with an authenticator app.</p><code>{setup.secret}</code><a className="mfa-open-link" href={setup.otpauthUrl}>Open authenticator setup <ArrowRight size={13}/></a><form onSubmit={confirm}><label className="field-label">6-digit authenticator code<input inputMode="numeric" autoComplete="one-time-code" value={setupCode} onChange={e => setSetupCode(e.target.value)} required maxLength={6} pattern="[0-9]{6}"/></label><button className="primary-btn" disabled={busy}>{busy ? 'Checking…' : 'Verify and enable MFA'}</button></form></div>}
+    {recoveryCodes.length > 0 && <div className="recovery-box"><b>Save your one-time recovery codes</b><p>Each code works once. They will not be shown again.</p><code>{recoveryCodes.join('  ·  ')}</code><button className="outline-btn" onClick={() => void copyCodes()}><Copy size={13}/> Copy codes</button></div>}
+    {enabled && !account.demo && <>{!disableOpen ? <button className="outline-btn mfa-action" onClick={() => { setDisableOpen(true); setError('') }}>Turn off two-factor authentication</button> : <form className="mfa-disable" onSubmit={disable}><b>Confirm your password and current authenticator code</b><label className="field-label">Password<input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required/></label><label className="field-label">Authenticator code<input inputMode="numeric" value={disableCode} onChange={e => setDisableCode(e.target.value)} required maxLength={6} pattern="[0-9]{6}"/></label><button className="primary-btn" disabled={busy}>Confirm and turn off MFA</button></form>}</>}
+    {error && <p className="mfa-error" role="alert">{error}</p>}
+  </div>
 }
+
+function SettingsPage({ account, dark, setDark, exportCsv, notify, signOut }: { account: Account; dark: boolean; setDark: (b: boolean) => void; exportCsv: () => void; notify: (s: string) => void; signOut: () => void }) {
+  const [currency, setCurrency] = useState(() => readStore('finsight-currency', 'INR'))
+  return <div className="settings-layout">
+    <div className="settings-nav panel">{['Your profile', 'Preferences', 'Notifications', 'Data & privacy'].map((x, i) => <button className={i === 0 ? 'active' : ''} key={x}><span>{[<div className="avatar small" key="profile">F</div>, <Settings size={16} key="preferences"/>, <Bell size={16} key="notifications"/>, <ShieldCheck size={16} key="privacy"/>][i]}</span>{x}<ChevronRight size={14}/></button>)}</div>
+    <div className="settings-content panel">
+      <div className="settings-section"><span className="eyebrow">YOUR PROFILE</span><div className="profile-edit"><div className="avatar big">F</div><div><b>{account.demo ? 'Demo account' : 'Account profile'}</b><span>{account.demo ? 'Local preview' : 'Email account'}</span></div></div><label className="field-label">Email address<input value={account.demo ? 'Demo mode' : account.email} readOnly/></label><button className="outline-btn profile-signout" onClick={signOut}><LogOut size={14}/> Sign out of this account</button></div>
+      <MfaSettings account={account} notify={notify}/>
+      <div className="settings-section"><span className="eyebrow">PREFERENCES</span><div className="settings-field"><div><b>Default currency</b><span>Choose a display currency. Values are not converted.</span></div><select value={currency} onChange={e => { setCurrency(e.target.value); localStorage.setItem('finsight-currency', e.target.value) }}><option value="INR">INR · ₹</option><option value="USD">USD · $</option><option value="EUR">EUR · €</option><option value="GBP">GBP · £</option></select></div><div className="settings-field"><div><b>Dark appearance</b><span>Choose a softer look for evening check-ins.</span></div><button className={`switch ${dark ? 'on' : ''}`} onClick={() => setDark(!dark)} aria-label="Toggle dark appearance"><i/></button></div></div>
+      <div className="settings-section"><span className="eyebrow">YOUR DATA</span><div className="settings-field"><div><b>Export your activity</b><span>Download a copy of the transactions in this browser.</span></div><button className="outline-btn" onClick={exportCsv}><Download size={14}/> Export CSV</button></div></div>
+      <div className="settings-footnote"><ShieldCheck size={15}/> Finance records are stored in this browser in the current MVP. No bank accounts are connected.</div>
+    </div>
+  </div>
+}
+
 export default App

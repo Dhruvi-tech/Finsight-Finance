@@ -12,5 +12,7 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: MFA_ENCRYPTION_KEY
+        sync: false
       - key: CLIENT_ORIGIN
         sync: false

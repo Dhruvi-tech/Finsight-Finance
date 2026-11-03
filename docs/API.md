@@ -7,8 +7,12 @@ Base path: `/api`. JSON request and response bodies use `application/json`; sess
 | GET | `/health` | No | API and database readiness |
 | POST | `/auth/register` | No | Create account and session |
 | POST | `/auth/login` | No | Verify credentials and create session |
+| POST | `/auth/mfa/verify` | MFA challenge | Complete sign-in with TOTP or one-time recovery code |
 | POST | `/auth/logout` | No | Clear session cookie |
 | GET | `/auth/me` | Yes | Current account |
+| POST | `/auth/mfa/setup` | Yes | Reconfirm password and create an encrypted pending authenticator secret |
+| POST | `/auth/mfa/confirm` | Yes | Verify setup code, enable MFA, and issue one-time recovery codes |
+| POST | `/auth/mfa/disable` | Yes | Require password and current TOTP code to disable MFA |
 | PATCH | `/profile` | Yes | Change display name or currency |
 | DELETE | `/account` | Yes | Confirm password and delete user records/account |
 | GET/POST | `/transactions` | Yes | List/create transactions |

@@ -12,6 +12,7 @@
 ## Authentication and API
 
 - Registration, sign-in/out, profile update, password hashing, signed HTTP-only cookie, and account deletion.
+- Authenticator-app MFA with encrypted TOTP secrets, a sign-in challenge, replay protection, and one-time recovery codes.
 - Owner-scoped CRUD for transactions, budgets, goals, and bills; JSON data export.
 - Input validation, rate limiting, origin checks, security headers, and health endpoint.
 
@@ -24,4 +25,4 @@
 - No live database, production deployment, responsive browser-matrix QA, or security certification is claimed.
 # Authentication and entry flow
 
-FinSight opens with a sign-up page and a sign-in tab. Email/password account requests use the Express authentication API, HTTP-only session cookies, bcrypt password hashing, server validation, and rate limiting. There is no demo shortcut or prefilled synthetic ledger; new accounts start empty. The account API requires `MONGODB_URI` and `JWT_SECRET`. The signed-in finance screens still use browser storage in this MVP and are not yet synced to the API.
+FinSight opens with a sign-up page and a sign-in tab. A small “Try demo sign-in” link appears on the sign-in tab and opens an empty local preview under a generic profile label. Email/password account requests use the Express API, HTTP-only session cookies, bcrypt password hashing, server validation, and rate limiting. Authenticator-app MFA is optional and requires `MFA_ENCRYPTION_KEY`. No sample finance records are included; new accounts start empty. Finance screens still use browser storage in this MVP and are not synced to the API.
