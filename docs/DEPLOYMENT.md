@@ -2,7 +2,7 @@
 
 ## Free public website
 
-The default Render Blueprint in [render.yaml](../render.yaml) publishes the client as a static site. Use the [Deploy to Render](https://render.com/deploy?repo=https://github.com/Dhruvi-tech/Finsight-Finance) button in the README and connect the public repository. The requested service name is `finsight-personal-finance`, which gives the branded URL `https://finsight-personal-finance.onrender.com` when the first deployment finishes. Render's static sites are free and receive a public `onrender.com` URL. The site may take a few minutes to appear after setup.
+The default Render Blueprint in [render.yaml](../render.yaml) publishes the client as a static site. The live service is `https://finsight-personal-finance.onrender.com`. To deploy a separate copy into another Render workspace, use the [Deploy to Render](https://render.com/deploy?repo=https://github.com/Dhruvi-tech/Finsight-Finance) button in the README and connect the public repository. Render static sites are free and receive a public `onrender.com` URL.
 
 This is a browser-only demo with empty starting data. Account registration, sign-in, and MFA need the API and database to be deployed separately. Finance records remain in local browser storage and are not synchronized to the API.
 

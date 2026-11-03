@@ -69,7 +69,7 @@ The calculation tests cover monthly totals, category totals, savings estimates, 
 
 ## Open or deploy FinSight
 
-The free Render static site is configured in `render.yaml`. Complete the first deployment from the button below; after Render creates the site, its branded address will be **https://finsight-personal-finance.onrender.com**. Render serves static sites from a public `onrender.com` address and supports deploying them free of charge. Until the first Render deployment completes, the new address may not open yet.
+The free Render static site is live at **https://finsight-personal-finance.onrender.com**. Render serves static sites from a public `onrender.com` address and supports deploying them free of charge. Use the button below to deploy a separate copy to your own Render workspace.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Dhruvi-tech/Finsight-Finance)
 
