@@ -57,8 +57,8 @@ The client is published as a static public demo on GitHub Pages. Account authent
 
 ## Links
 
-- **Public demo:** https://dhruvi-tech.github.io/finsight-personal-finance/
-- **GitHub repository:** https://github.com/Dhruvi-tech/finsight-personal-finance
+- **Public demo:** https://dhruvi-tech.github.io/Finsight-Finance/
+- **GitHub repository:** https://github.com/Dhruvi-tech/Finsight-Finance
 - [Deployment setup](docs/DEPLOYMENT.md) · [API reference](docs/API.md) · [Feature status](docs/FEATURES.md)
 
 ## Screenshots
