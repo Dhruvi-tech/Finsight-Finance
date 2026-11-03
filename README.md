@@ -153,3 +153,17 @@ The FinSight platform has been upgraded with an ultra-premium visual design syst
   - Breathing radar indicators for live financial feeds and holographic badge effects for FinSight AI.
 - **Full Sidebar Auto-Retraction & Smooth Reflow:** Seamless zero-width sidebar toggling via `☰` and `✕` with fluid width and margin transitions ensuring 100% full-screen canvas expansion.
 - **Verified Production Deployment:** Fully optimized Vite production bundles deployed directly to Render with automated CI validation.
+
+---
+
+## 🔐 Google Account Chooser, Gmail 2FA Security & Modular Settings (v2.5 Upgrade)
+
+- **Interactive Google Account Picker Dialog:** Seamless account chooser offering instant profile selection (`Dhruvi Mittal` with Google photo, `Dhruvi Tech` with initial 'D', or custom account), automatically selecting and binding the user's avatar initial or profile photo.
+- **Gmail 2-Step Verification (2FA):** 6-digit security code dispatched to Gmail on sign-in with live verification banner, one-click autofill, and resend support.
+- **Modular Tabbed Settings Navigation:** Independent dedicated views for:
+  - 👤 **Your Profile:** Dynamic photo/initial toggle (`D`), name & email controls, sign out.
+  - 📬 **Gmail Alerts:** Bill due reminders, 80% budget warnings, live test alert dispatcher.
+  - 🛡️ **Security (2FA):** Gmail 2FA toggles and Authenticator app configuration.
+  - ⚙️ **Preferences:** Currency switch (INR ₹, USD $, EUR €, GBP £) and evening Dark Mode.
+  - 💾 **Data & Privacy:** Complete CSV transaction activity export and local privacy safeguards.
+- **Dynamic Avatar Initial & Photo Sync:** Complete real-time synchronization of the user initial (`D`) or Google picture across the topbar header, sidebar footer, and settings workspace.

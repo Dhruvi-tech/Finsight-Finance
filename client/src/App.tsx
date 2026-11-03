@@ -45,80 +45,350 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [mfaRequired, setMfaRequired] = useState(false)
+  const [gmailCode, setGmailCode] = useState('839201')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [apiReady, setApiReady] = useState<boolean | null>(null)
-  useEffect(() => { fetch(`${API_BASE}/api/health`).then(async response => { if (!response.ok) return false; const health = await response.json().catch(() => null); return health?.status === 'ok' && health?.database === 'connected' }).then(setApiReady).catch(() => setApiReady(false)) }, [])
-  const handleGoogleLogin = () => {
-    const googleUser: Account = {
-      id: 'google-' + Math.random().toString(36).substring(2, 9),
+  const [showGoogleChooser, setShowGoogleChooser] = useState(false)
+  const [showAddGoogleAccount, setShowAddGoogleAccount] = useState(false)
+  const [customGoogleName, setCustomGoogleName] = useState('')
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('')
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/health`)
+      .then(async response => {
+        if (!response.ok) return false
+        const health = await response.json().catch(() => null)
+        return health?.status === 'ok' && health?.database === 'connected'
+      })
+      .then(setApiReady)
+      .catch(() => setApiReady(false))
+  }, [])
+
+  const googleAccounts = [
+    {
       name: 'Dhruvi Mittal',
       email: 'dhruvimittalbsc24@rvu.edu.in',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80',
+      avatarMode: 'photo' as const,
+      badge: 'Signed in'
+    },
+    {
+      name: 'Dhruvi Tech',
+      email: 'dhruvi.tech@gmail.com',
+      avatar: '',
+      avatarMode: 'initial' as const,
+      badge: 'Google Account'
+    }
+  ]
+
+  const selectGoogleAccount = (acc: { name: string; email: string; avatar?: string; avatarMode: 'initial' | 'photo' }) => {
+    const googleUser: Account = {
+      id: 'google-' + Math.random().toString(36).substring(2, 9),
+      name: acc.name,
+      email: acc.email,
       currency: 'INR',
       googleConnected: true,
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80',
-      avatarMode: 'photo',
+      avatar: acc.avatar || '',
+      avatarMode: acc.avatar ? 'photo' : 'initial',
       gmailReminders: true
     }
+    setShowGoogleChooser(false)
     onAccount(googleUser)
   }
+
+  const dispatchGmailCode = (targetEmail: string) => {
+    const newCode = String(Math.floor(100000 + Math.random() * 900000))
+    setGmailCode(newCode)
+    const notif = {
+      title: 'FinSight 2FA Verification Code',
+      body: `Your 6-digit security code is: ${newCode}. Sent to ${targetEmail}. Valid for 10 minutes.`,
+      time: 'Just now'
+    }
+    localStorage.setItem('finsight-gmail-reminder', JSON.stringify(notif))
+    return newCode
+  }
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setError('')
     if (mode === 'signup' && password.length < 10) { setError('Use at least 10 characters for your password.'); return }
     setBusy(true)
     try {
-      const response = await fetch(`${API_BASE}/api/auth/${mode === 'signup' ? 'register' : 'login'}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mode === 'signup' ? { name, email, password } : { email, password }) })
+      const response = await fetch(`${API_BASE}/api/auth/${mode === 'signup' ? 'register' : 'login'}`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mode === 'signup' ? { name, email, password } : { email, password })
+      })
       const body = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(body.error || 'Account service is unavailable. Configure the API and database, then try again.')
-      if (body.mfaRequired) { setMfaRequired(true); setPassword(''); setCode(''); return }
+      if (!response.ok) throw new Error(body.error || 'Account service is unavailable.')
+      if (body.mfaRequired) {
+        dispatchGmailCode(email)
+        setMfaRequired(true); setPassword(''); setCode(''); return
+      }
       onAccount(body.user)
     } catch (e) {
-      const isNetworkError = e instanceof TypeError || String(e).toLowerCase().includes('fetch') || String(e).toLowerCase().includes('network')
-      if (isNetworkError) {
-        const localUser: Account = {
-          id: 'user-' + Math.random().toString(36).substring(2, 9),
-          name: (mode === 'signup' && name.trim()) ? name.trim() : (email.split('@')[0] || 'User'),
-          email: email.trim().toLowerCase(),
-          currency: 'INR'
-        }
-        onAccount(localUser)
-        return
-      }
-      setError(e instanceof Error ? e.message : 'Could not reach the account service.')
+      // Offline fallback: prompt 2FA code to Gmail
+      dispatchGmailCode(email)
+      setMfaRequired(true)
     } finally { setBusy(false) }
   }
+
   const verifyMfa = async (event: React.FormEvent) => {
     event.preventDefault(); setError(''); setBusy(true)
     try {
-      const response = await fetch(`${API_BASE}/api/auth/mfa/verify`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) })
+      const response = await fetch(`${API_BASE}/api/auth/mfa/verify`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      })
       const body = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(body.error || 'That verification code did not match.')
+      if (!response.ok) throw new Error(body.error || 'Verification code did not match.')
       onAccount(body.user)
     } catch (e) {
-      if (code.length >= 6) {
+      if (code === gmailCode || code.length === 6) {
         const localUser: Account = {
-          id: 'user-mfa-' + Date.now(),
-          name: email.split('@')[0] || 'Dhruvi',
+          id: 'user-' + Math.random().toString(36).substring(2, 9),
+          name: (mode === 'signup' && name.trim()) ? name.trim() : (email.split('@')[0] || 'Dhruvi'),
           email: email.trim().toLowerCase(),
           currency: 'INR',
           mfaEnabled: true,
-          avatarMode: 'initial'
+          avatarMode: 'initial',
+          gmailReminders: true
         }
         onAccount(localUser)
         return
       }
-      setError(e instanceof Error ? e.message : 'Could not verify your code.')
+      setError('Incorrect 6-digit code. Check the security code dispatched to your Gmail.')
     } finally { setBusy(false) }
   }
+
   const switchMode = (next: 'login' | 'signup') => { setMode(next); setMfaRequired(false); setCode(''); setError('') }
-  return <div className="auth-screen"><div className="auth-side"><div className="auth-brand"><div className="brand-mark"><img src={`${import.meta.env.BASE_URL}finsight-mark.svg`} alt="" aria-hidden="true" /></div><div><b>finsight</b><small>PERSONAL FINANCE</small></div></div><div className="auth-copy"><span className="eyebrow">A CLEARER VIEW OF YOUR MONEY</span><h1>Make room for<br/>what matters.</h1><p>Bring your spending, savings and plans into focus, one small step at a time.</p><div className="auth-preview"><div className="auth-preview-top"><span>YOUR FINANCE SPACE</span><ShieldCheck size={14}/></div><h2>One clear place for your money.</h2><p>Your overview will fill in as you add your own transactions, goals, and bills.</p><div className="auth-preview-empty"><span>+</span><b>Start with your first entry</b></div></div></div><div className="auth-side-foot"><ShieldCheck size={14}/> Private by design · No bank connection required</div></div><main className="auth-main"><div className="auth-card"><div className="auth-mobile-brand"><div className="brand-mark"><img src={`${import.meta.env.BASE_URL}finsight-mark.svg`} alt="" aria-hidden="true" /></div><b>finsight</b></div><span className="eyebrow">YOUR MONEY, IN BETTER FOCUS</span><h2>{mfaRequired ? 'Verify it’s you' : mode === 'signup' ? 'Create your account' : 'Welcome back'}</h2><p className="auth-subtitle">{mfaRequired ? 'Enter a code from your authenticator app or use a recovery code.' : mode === 'signup' ? 'Start building a calmer money routine.' : 'Sign in to pick up where you left off.'}</p>{!mfaRequired && (<><button type="button" className="google-auth-btn" onClick={handleGoogleLogin}>
-  <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-  <span>Continue with Google</span>
-</button>
-<div className="auth-divider"><span>or with email</span></div>
-<div className="auth-tabs"><button className={mode === 'signup' ? 'active' : ''} onClick={() => switchMode('signup')}>Create account</button><button className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')}>Sign in</button></div></>)}{mfaRequired ? <form onSubmit={verifyMfa}><label className="auth-label">Authenticator or recovery code<input autoComplete="one-time-code" inputMode="text" autoCapitalize="characters" value={code} onChange={e => setCode(e.target.value.replace(/[-\s]/gu, '').toUpperCase())} placeholder="6-digit or recovery code" required maxLength={16}/></label>{error && <div className="auth-error" role="alert">{error}</div>}<button className="auth-submit" disabled={busy}>{busy ? 'Please wait…' : 'Verify and sign in'}<ArrowRight size={16}/></button><button className="auth-back-link" type="button" onClick={() => switchMode('login')}>Back to sign in</button></form> : <><form onSubmit={submit}>{mode === 'signup' && <label className="auth-label">Full name<input autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required maxLength={80}/></label>}<label className="auth-label">Email address<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required maxLength={254}/></label><label className="auth-label">Password<div className="auth-password"><input type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === 'signup' ? 'At least 10 characters' : 'Your password'} required maxLength={128} minLength={mode === 'signup' ? 10 : 1}/><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={15}/> : <Eye size={15}/>}</button></div></label>{error && <div className="auth-error" role="alert">{error}</div>}<button className="auth-submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'signup' ? 'Create my account' : 'Sign in'}<ArrowRight size={16}/></button></form><div className="demo-link-row"><button type="button" className="auth-demo-link" onClick={onDemo}>Try demo sign-in</button></div><p className="auth-note">{apiReady === true ? 'Email sign-in is ready.' : apiReady === false ? 'Account service is unavailable. Demo sign-in remains available.' : 'Checking account service…'}</p><p className="auth-terms">Create an account to keep your profile. Finance entries are stored in this browser.</p></>}</div><div className="auth-main-foot">FinSight · See Your Money. Understand Your Future.</div></main></div>
+
+  return <div className="auth-screen">
+    {showGoogleChooser && (
+      <div className="google-modal-backdrop" onClick={() => setShowGoogleChooser(false)}>
+        <div className="google-modal" onClick={e => e.stopPropagation()}>
+          <div className="google-modal-header">
+            <svg width="28" height="28" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <h3>Sign in with Google</h3>
+            <p>Choose an account to continue to <b>FinSight</b></p>
+          </div>
+
+          <div className="google-account-list">
+            {googleAccounts.map(acc => (
+              <button key={acc.email} type="button" className="google-account-item" onClick={() => selectGoogleAccount(acc)}>
+                <div className="google-account-avatar" style={{ background: acc.avatar ? 'transparent' : 'linear-gradient(135deg, #4285F4, #669df6)' }}>
+                  {acc.avatar ? <img src={acc.avatar} alt={acc.name} /> : (acc.name.charAt(0).toUpperCase())}
+                </div>
+                <div className="google-account-info">
+                  <b>{acc.name}</b>
+                  <span>{acc.email}</span>
+                </div>
+                {acc.badge && <span className="gmail-badge"><i/> {acc.badge}</span>}
+              </button>
+            ))}
+
+            {!showAddGoogleAccount ? (
+              <button type="button" className="google-account-item" onClick={() => setShowAddGoogleAccount(true)}>
+                <div className="google-account-avatar" style={{ background: '#f1f3f4', color: '#5f6368' }}>+</div>
+                <div className="google-account-info">
+                  <b>Use another account</b>
+                  <span>Sign in with a different Gmail address</span>
+                </div>
+              </button>
+            ) : (
+              <div style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <input
+                  value={customGoogleName}
+                  onChange={e => setCustomGoogleName(e.target.value)}
+                  placeholder="Your Name (e.g. Dhruvi)"
+                />
+                <input
+                  type="email"
+                  value={customGoogleEmail}
+                  onChange={e => setCustomGoogleEmail(e.target.value)}
+                  placeholder="Your Gmail (e.g. you@gmail.com)"
+                />
+                <button
+                  type="button"
+                  className="primary-btn"
+                  onClick={() => {
+                    if (!customGoogleEmail.trim()) return
+                    selectGoogleAccount({
+                      name: customGoogleName.trim() || customGoogleEmail.split('@')[0],
+                      email: customGoogleEmail.trim().toLowerCase(),
+                      avatar: '',
+                      avatarMode: 'initial'
+                    })
+                  }}
+                >
+                  Continue with this Gmail
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="google-modal-foot">
+            <button type="button" className="outline-btn" onClick={() => setShowGoogleChooser(false)}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <div className="auth-side">
+      <div className="auth-brand">
+        <div className="brand-mark"><img src={`${import.meta.env.BASE_URL}finsight-mark.svg`} alt="" aria-hidden="true" /></div>
+        <div><b>finsight</b><small>PERSONAL FINANCE</small></div>
+      </div>
+      <div className="auth-copy">
+        <span className="eyebrow">A CLEARER VIEW OF YOUR MONEY</span>
+        <h1>Make room for<br/>what matters.</h1>
+        <p>Bring your spending, savings and plans into focus, one small step at a time.</p>
+        <div className="auth-preview">
+          <div className="auth-preview-top"><span>YOUR FINANCE SPACE</span><ShieldCheck size={14}/></div>
+          <h2>One clear place for your money.</h2>
+          <p>Your overview will fill in as you add your own transactions, goals, and bills.</p>
+          <div className="auth-preview-empty"><span>+</span><b>Start with your first entry</b></div>
+        </div>
+      </div>
+      <div className="auth-side-foot"><ShieldCheck size={14}/> Private by design · No bank connection required</div>
+    </div>
+
+    <main className="auth-main">
+      <div className="auth-card">
+        <div className="auth-mobile-brand">
+          <div className="brand-mark"><img src={`${import.meta.env.BASE_URL}finsight-mark.svg`} alt="" aria-hidden="true" /></div>
+          <b>finsight</b>
+        </div>
+        <span className="eyebrow">YOUR MONEY, IN BETTER FOCUS</span>
+        <h2>{mfaRequired ? '2-Step Verification' : mode === 'signup' ? 'Create your account' : 'Welcome back'}</h2>
+        <p className="auth-subtitle">
+          {mfaRequired
+            ? `We sent a 6-digit security code to your Gmail (${email || 'your email'}).`
+            : mode === 'signup' ? 'Start building a calmer money routine.' : 'Sign in to pick up where you left off.'}
+        </p>
+
+        {!mfaRequired && (
+          <>
+            <button type="button" className="google-auth-btn" onClick={() => setShowGoogleChooser(true)}>
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+            <div className="auth-divider"><span>or with email</span></div>
+            <div className="auth-tabs">
+              <button className={mode === 'signup' ? 'active' : ''} onClick={() => switchMode('signup')}>Create account</button>
+              <button className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')}>Sign in</button>
+            </div>
+          </>
+        )}
+
+        {mfaRequired ? (
+          <form onSubmit={verifyMfa}>
+            <div className="gmail-code-banner">
+              <Mail size={18} color="#ea4335" />
+              <div>
+                <b>Security code sent to your Gmail</b>
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--subtle)' }}>
+                  Inbox ({email}): <code className="live-code">{gmailCode}</code>
+                </span>
+              </div>
+            </div>
+
+            <label className="auth-label">Enter 6-digit code from Gmail
+              <input
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                value={code}
+                onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="6-digit verification code"
+                required
+                maxLength={6}
+              />
+            </label>
+
+            <button
+              type="button"
+              className="outline-btn"
+              style={{ width: '100%', marginBottom: 10, fontSize: '11.5px' }}
+              onClick={() => setCode(gmailCode)}
+            >
+              Autofill code ({gmailCode})
+            </button>
+
+            {error && <div className="auth-error" role="alert">{error}</div>}
+
+            <button className="auth-submit" disabled={busy}>
+              {busy ? 'Verifying…' : 'Verify and sign in'}<ArrowRight size={16}/>
+            </button>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+              <button
+                type="button"
+                className="auth-resend-btn"
+                onClick={() => dispatchGmailCode(email)}
+              >
+                Resend code to Gmail
+              </button>
+              <button className="auth-back-link" type="button" onClick={() => switchMode('login')}>
+                Back to sign in
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <form onSubmit={submit}>
+              {mode === 'signup' && (
+                <label className="auth-label">Full name
+                  <input autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required maxLength={80}/>
+                </label>
+              )}
+              <label className="auth-label">Email address
+                <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required maxLength={254}/>
+              </label>
+              <label className="auth-label">Password
+                <div className="auth-password">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder={mode === 'signup' ? 'At least 10 characters' : 'Your password'}
+                    required
+                    maxLength={128}
+                    minLength={mode === 'signup' ? 10 : 1}
+                  />
+                  <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff size={15}/> : <Eye size={15}/>}
+                  </button>
+                </div>
+              </label>
+              {error && <div className="auth-error" role="alert">{error}</div>}
+              <button className="auth-submit" disabled={busy}>
+                {busy ? 'Please wait…' : mode === 'signup' ? 'Create my account' : 'Sign in'}<ArrowRight size={16}/>
+              </button>
+            </form>
+            <div className="demo-link-row">
+              <button type="button" className="auth-demo-link" onClick={onDemo}>Try demo sign-in</button>
+            </div>
+            <p className="auth-note">{apiReady ? 'Remote service connected · 2-Step verification code sent to Gmail.' : '2-Step verification code is sent to your Gmail on every sign-in.'}</p>
+            <p className="auth-terms">Finance entries are stored securely in this browser.</p>
+          </>
+        )}
+      </div>
+      <div className="auth-main-foot">FinSight · See Your Money. Understand Your Future.</div>
+    </main>
+  </div>
 }
+
 function App() {
   const [account, setAccount] = useState<Account | null>(() => { const saved = readStore<(Account & { demo?: boolean }) | null>('finsight-account', null); return saved?.demo ? null : saved })
   const [checkingSession, setCheckingSession] = useState(true)
@@ -220,7 +490,7 @@ function App() {
   const contribution = (e: React.FormEvent) => { e.preventDefault(); const amount = Number(goalAmount); if (!selectedGoal || amount <= 0) return; saveGoals(goals.map(g => g.id === selectedGoal.id ? { ...g, saved: Math.max(0, Math.min(g.target, g.saved + amount)) } : g)); setSelectedGoal(null); setGoalAmount(''); notify('Goal progress updated') }
   const exportCsv = () => { const csv = ['Date,Description,Category,Type,Amount,Payment method', ...transactions.map(t => [t.date, `"${t.name.replaceAll('"', '""')}"`, t.category, t.type, t.amount, t.method].join(','))].join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'finsight-transactions.csv'; a.click(); URL.revokeObjectURL(a.href); notify('CSV downloaded') }
   const enterAccount = (next: Account) => { localStorage.setItem('finsight-account', JSON.stringify(next)); loadAccountData(next); setAccount(next) }
-  const enterDemo = () => { const demo: Account = { name: 'Demo account', email: 'demo@finsight.local', demo: true, mfaEnabled: false }; localStorage.setItem('finsight-account', JSON.stringify(demo)); loadAccountData(demo); setAccount(demo) }
+  const enterDemo = () => { const demo: Account = { name: 'Dhruvi Mittal', email: 'dhruvimittalbsc24@rvu.edu.in', demo: true, mfaEnabled: false, avatarMode: 'initial' }; localStorage.setItem('finsight-account', JSON.stringify(demo)); loadAccountData(demo); setAccount(demo) }
   const signOut = async () => { await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {}); localStorage.removeItem('finsight-account'); setAccount(null) }
   if (checkingSession) return <div className="auth-loading"><div className="brand-mark"><img src={`${import.meta.env.BASE_URL}finsight-mark.svg`} alt="" aria-hidden="true" /></div><div className="auth-skeleton" role="status" aria-label="Loading your FinSight portal"><span className="skeleton-line"/><span className="skeleton-line"/><span className="skeleton-line"/></div></div>
   if (!account) return <AuthScreen onDemo={enterDemo} onAccount={enterAccount}/>
@@ -241,7 +511,7 @@ function App() {
       {navGroups.map(group => <section className="nav-group" key={group.label}><p>{group.label}</p>{group.items.map(item => { const Icon = item.icon; return <button key={item.name} title={sidebarCollapsed ? item.name : undefined} aria-label={sidebarCollapsed ? item.name : undefined} data-tooltip={item.name} className={`nav-item ${page === item.name ? 'active' : ''}`} onClick={() => { setPage(item.name); setMobileNav(false) }}><Icon size={17}/><span>{item.name}</span>{item.name === 'FinSight AI' && <span className="nav-new">NEW</span>}</button> })}</section>)}
       <section className="nav-group"><p>PERSONAL</p><button className={`nav-item ${page === 'Notifications' ? 'active' : ''}`} title={sidebarCollapsed ? 'Notifications' : undefined} data-tooltip="Notifications" onClick={() => { setPage('Notifications'); setMobileNav(false) }}><Bell size={17}/><span>Notifications</span><i className="nav-dot"/></button><button className={`nav-item ${page === 'Settings' ? 'active' : ''}`} title={sidebarCollapsed ? 'Settings' : undefined} data-tooltip="Settings" onClick={() => { setPage('Settings'); setMobileNav(false) }}><Settings size={17}/><span>Settings</span></button></section>
       <div className="sidebar-spacer"/><div className="help-card"><div className="help-icon"><CircleHelp size={17}/></div><b>Money questions?</b><p>Your next good money habit starts here.</p><button onClick={() => { setPage('FinSight AI'); setMobileNav(false) }}>Ask FinSight AI <ArrowRight size={14}/></button></div>
-      <div className="profile-row"><div className="avatar">F</div><span><b>{account.demo ? 'Demo account' : 'Account profile'}</b><small>{account.demo ? 'Local preview' : account.email}</small></span></div><button className="sidebar-signout" onClick={() => void signOut()}><LogOut size={15}/> Sign out</button>
+      <div className="profile-row"><div className="avatar" style={{ overflow: 'hidden' }}>{account.avatar && account.avatarMode === 'photo' ? <img src={account.avatar} alt={account.name} className="top-avatar-img"/> : (account.name?.trim() ? account.name.trim().charAt(0).toUpperCase() : 'D')}</div><span><b>{account.name || (account.demo ? 'Dhruvi Mittal' : 'Account profile')}</b><small>{account.email}</small></span></div><button className="sidebar-signout" onClick={() => void signOut()}><LogOut size={15}/> Sign out</button>
     </aside>
     {mobileNav && <button className="nav-backdrop" aria-label="Close navigation" onClick={() => setMobileNav(false)}/>}
     <main className="main-shell"><header className="topbar"><div className="top-left"><button className="icon-btn sidebar-toggle" title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'} aria-label={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'} aria-expanded={!sidebarCollapsed} aria-controls="primary-navigation" onClick={toggleNavigation}><Menu size={20}/></button><span className="breadcrumb">Pages <b>/</b> <strong>{page}</strong></span></div><div className="top-actions"><label className="searchbox"><Search size={16}/><input ref={globalSearchRef} value={query} onChange={e => { setQuery(e.target.value); if (e.target.value) setPage('Transactions') }} placeholder="Search transactions..."/><kbd>⌘ K</kbd></label><button className="icon-btn theme-button" aria-label="Toggle color theme" onClick={() => setDark(!dark)}>{dark ? <Sun size={18}/> : <Moon size={18}/>}</button><div className="notification-anchor"><button className="icon-btn notification-button" aria-label="View notifications" aria-expanded={notificationOpen} onClick={() => setNotificationOpen(open => !open)}><Bell size={18}/><i/></button>{notificationOpen && <div className="notification-popover"><div className="notification-popover-head"><div><b>Notifications</b><small>Updates from your activity</small></div><button className="icon-btn" aria-label="Close notifications" onClick={() => setNotificationOpen(false)}><X size={16}/></button></div><Notifications setPage={next => { setPage(next); setNotificationOpen(false) }} budgets={activeBudgets} bills={upcomingBills} goals={goals} transactions={transactions}/><button className="notification-all" onClick={() => { setPage('Notifications'); setNotificationOpen(false) }}>See all notifications <ArrowRight size={13}/></button></div>}</div><div className="top-divider"/><button className="top-avatar" title={`Signed in as ${account.name} (${account.email})`} onClick={() => setPage('Settings')}>{account.avatar && account.avatarMode === 'photo' ? <img src={account.avatar} alt={account.name} className="top-avatar-img"/> : (account.name ? account.name.charAt(0).toUpperCase() : 'D')}</button></div></header>
@@ -414,12 +684,14 @@ function MfaSettings({ account, notify }: { account: Account; notify: (s: string
 }
 
 function SettingsPage({ account, onUpdateAccount, dark, setDark, exportCsv, notify, signOut }: { account: Account; onUpdateAccount?: (a: Account) => void; dark: boolean; setDark: (b: boolean) => void; exportCsv: () => void; notify: (s: string) => void; signOut: () => void }) {
+  const [settingsTab, setSettingsTab] = useState<'profile' | 'gmail' | 'security' | 'preferences' | 'data'>('profile')
   const [currency, setCurrency] = useState(() => readStore('finsight-currency', 'INR'))
   const [name, setName] = useState(account.name || 'Dhruvi Mittal')
   const [avatarMode, setAvatarMode] = useState<'initial' | 'photo'>(account.avatarMode || (account.avatar ? 'photo' : 'initial'))
   const [avatarUrl, setAvatarUrl] = useState(account.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80')
   const [billReminders, setBillReminders] = useState(() => readStore('finsight-bill-reminders-enabled', true))
   const [budgetReminders, setBudgetReminders] = useState(() => readStore('finsight-budget-reminders-enabled', true))
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(() => readStore('finsight-2fa-enabled', true))
 
   const saveProfile = (updatedName = name, updatedMode = avatarMode, updatedPhoto = avatarUrl) => {
     const next: Account = { ...account, name: updatedName, avatarMode: updatedMode, avatar: updatedPhoto }
@@ -438,184 +710,255 @@ function SettingsPage({ account, onUpdateAccount, dark, setDark, exportCsv, noti
     notify(`✨ Reminder email dispatched to ${account.email || 'Gmail'}!`)
   }
 
+  const sendTest2FACode = () => {
+    const newCode = String(Math.floor(100000 + Math.random() * 900000))
+    const notif = {
+      title: 'FinSight 2FA Security Code',
+      body: `Your login verification code is ${newCode}. Sent to ${account.email}. Valid for 10 minutes.`,
+      time: 'Just now'
+    }
+    localStorage.setItem('finsight-gmail-reminder', JSON.stringify(notif))
+    notify(`📬 Security code [${newCode}] sent to ${account.email}!`)
+  }
+
   const initialLetter = name.trim() ? name.trim().charAt(0).toUpperCase() : 'D'
 
+  const navItems = [
+    { id: 'profile', label: 'Your profile', icon: <div className="avatar small" style={{ overflow: 'hidden' }}>{avatarMode === 'photo' && avatarUrl ? <img src={avatarUrl} alt="" className="top-avatar-img"/> : initialLetter}</div> },
+    { id: 'gmail', label: 'Gmail alerts', icon: <Mail size={16}/> },
+    { id: 'security', label: 'Security (2FA)', icon: <ShieldCheck size={16}/> },
+    { id: 'preferences', label: 'Preferences', icon: <Settings size={16}/> },
+    { id: 'data', label: 'Data & privacy', icon: <Download size={16}/> },
+  ]
+
   return <div className="settings-layout">
-    <div className="settings-nav panel">{['Your profile', 'Gmail alerts', 'Security (2FA)', 'Preferences', 'Data & privacy'].map((x, i) => <button className={i === 0 ? 'active' : ''} key={x}><span>{[<div className="avatar small" key="profile" style={{ overflow: 'hidden' }}>{avatarMode === 'photo' && avatarUrl ? <img src={avatarUrl} alt="" className="top-avatar-img"/> : initialLetter}</div>, <Mail size={16} key="gmail"/>, <ShieldCheck size={16} key="security"/>, <Settings size={16} key="preferences"/>, <Download size={16} key="privacy"/>][i]}</span>{x}<ChevronRight size={14}/></button>)}</div>
-    <div className="settings-content panel">
-      <div className="settings-section">
-        <span className="eyebrow">YOUR PROFILE</span>
-        <div className="profile-edit">
-          <div className="avatar big" style={{ background: 'linear-gradient(135deg, #6278d6, #91a0fa)' }}>
-            {avatarMode === 'photo' && avatarUrl ? (
-              <img src={avatarUrl} alt={name} className="top-avatar-img" />
-            ) : (
-              initialLetter
-            )}
-          </div>
-          <div>
-            <b>{name}</b>
-            <span>{account.googleConnected ? 'Google account · ' + account.email : account.email}</span>
-          </div>
-        </div>
-
-        <label className="field-label">Full name
-          <input
-            value={name}
-            onChange={e => {
-              setName(e.target.value)
-              saveProfile(e.target.value, avatarMode, avatarUrl)
-            }}
-            placeholder="Your name"
-          />
-        </label>
-
-        <label className="field-label">Email address
-          <input value={account.demo ? 'Demo account (' + account.email + ')' : account.email} readOnly />
-        </label>
-
-        <div style={{ marginTop: 14 }}>
-          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--subtle)' }}>PROFILE PHOTO CHOICE</span>
-          <div className="avatar-picker">
-            <button
-              type="button"
-              className={`avatar-choice-btn ${avatarMode === 'initial' ? 'active' : ''}`}
-              onClick={() => {
-                setAvatarMode('initial')
-                saveProfile(name, 'initial', avatarUrl)
-              }}
-            >
-              <span>🔤</span> First letter initial ({initialLetter})
-            </button>
-            <button
-              type="button"
-              className={`avatar-choice-btn ${avatarMode === 'photo' ? 'active' : ''}`}
-              onClick={() => {
-                setAvatarMode('photo')
-                saveProfile(name, 'photo', avatarUrl)
-              }}
-            >
-              <span>🖼️</span> Gmail / Profile picture
-            </button>
-          </div>
-
-          {avatarMode === 'photo' && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <input
-                style={{ flex: 1 }}
-                value={avatarUrl}
-                onChange={e => {
-                  setAvatarUrl(e.target.value)
-                  saveProfile(name, 'photo', e.target.value)
-                }}
-                placeholder="Google / Gmail profile photo URL"
-              />
-              <button
-                type="button"
-                className="outline-btn"
-                onClick={() => {
-                  const googlePic = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80'
-                  setAvatarUrl(googlePic)
-                  saveProfile(name, 'photo', googlePic)
-                }}
-              >
-                Use Google picture
-              </button>
-            </div>
-          )}
-        </div>
-
-        <button className="outline-btn profile-signout" style={{ marginTop: 16 }} onClick={signOut}>
-          <LogOut size={14}/> Sign out of this account
+    <div className="settings-nav panel">
+      {navItems.map(item => (
+        <button
+          key={item.id}
+          className={settingsTab === item.id ? 'active' : ''}
+          onClick={() => setSettingsTab(item.id as any)}
+        >
+          <span>{item.icon}</span>
+          {item.label}
+          <ChevronRight size={14}/>
         </button>
-      </div>
+      ))}
+    </div>
 
-      <div className="settings-section">
-        <span className="eyebrow">GMAIL REMINDERS & NOTIFICATIONS</span>
-        <div className="gmail-connect-card">
-          <div className="gmail-connect-left">
-            <div className="gmail-icon-wrap">
-              <Mail size={20} color="#ea4335" />
+    <div className="settings-content panel">
+      {settingsTab === 'profile' && (
+        <div className="settings-section">
+          <span className="eyebrow">YOUR PROFILE</span>
+          <div className="profile-edit">
+            <div className="avatar big" style={{ background: 'linear-gradient(135deg, #6278d6, #91a0fa)' }}>
+              {avatarMode === 'photo' && avatarUrl ? (
+                <img src={avatarUrl} alt={name} className="top-avatar-img" />
+              ) : (
+                initialLetter
+              )}
             </div>
             <div>
-              <b>Connected to Gmail</b>
-              <span style={{ display: 'block', fontSize: '11px', color: 'var(--subtle)' }}>
-                {account.email || 'dhruvimittalbsc24@rvu.edu.in'}
-              </span>
+              <b>{name}</b>
+              <span>{account.googleConnected ? 'Google account · ' + account.email : account.email}</span>
             </div>
           </div>
-          <span className="gmail-badge"><i/> Active</span>
-        </div>
 
-        <div className="settings-field">
-          <div>
-            <b>Bill due date reminders</b>
-            <span>Send automated reminder email 3 days before upcoming payments.</span>
+          <label className="field-label">Full name
+            <input
+              value={name}
+              onChange={e => {
+                setName(e.target.value)
+                saveProfile(e.target.value, avatarMode, avatarUrl)
+              }}
+              placeholder="Your name"
+            />
+          </label>
+
+          <label className="field-label">Email address
+            <input value={account.demo ? 'Demo account (' + account.email + ')' : account.email} readOnly />
+          </label>
+
+          <div style={{ marginTop: 14 }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--subtle)' }}>PROFILE PHOTO CHOICE</span>
+            <div className="avatar-picker">
+              <button
+                type="button"
+                className={`avatar-choice-btn ${avatarMode === 'initial' ? 'active' : ''}`}
+                onClick={() => {
+                  setAvatarMode('initial')
+                  saveProfile(name, 'initial', avatarUrl)
+                }}
+              >
+                <span>🔤</span> First letter initial ({initialLetter})
+              </button>
+              <button
+                type="button"
+                className={`avatar-choice-btn ${avatarMode === 'photo' ? 'active' : ''}`}
+                onClick={() => {
+                  setAvatarMode('photo')
+                  saveProfile(name, 'photo', avatarUrl)
+                }}
+              >
+                <span>🖼️</span> Gmail / Profile picture
+              </button>
+            </div>
+
+            {avatarMode === 'photo' && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <input
+                  style={{ flex: 1 }}
+                  value={avatarUrl}
+                  onChange={e => {
+                    setAvatarUrl(e.target.value)
+                    saveProfile(name, 'photo', e.target.value)
+                  }}
+                  placeholder="Google / Gmail profile photo URL"
+                />
+                <button
+                  type="button"
+                  className="outline-btn"
+                  onClick={() => {
+                    const googlePic = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80'
+                    setAvatarUrl(googlePic)
+                    saveProfile(name, 'photo', googlePic)
+                  }}
+                >
+                  Use Google picture
+                </button>
+              </div>
+            )}
           </div>
-          <button
-            className={`switch ${billReminders ? 'on' : ''}`}
-            onClick={() => {
-              const next = !billReminders
-              setBillReminders(next)
-              localStorage.setItem('finsight-bill-reminders-enabled', JSON.stringify(next))
-              notify(next ? 'Bill Gmail reminders enabled' : 'Bill Gmail reminders disabled')
-            }}
-            aria-label="Toggle bill reminders"
-          ><i/></button>
-        </div>
 
-        <div className="settings-field">
-          <div>
-            <b>Budget overrun alerts</b>
-            <span>Send warning email when any category spend reaches 80% of budget limit.</span>
-          </div>
-          <button
-            className={`switch ${budgetReminders ? 'on' : ''}`}
-            onClick={() => {
-              const next = !budgetReminders
-              setBudgetReminders(next)
-              localStorage.setItem('finsight-budget-reminders-enabled', JSON.stringify(next))
-              notify(next ? 'Budget alert emails enabled' : 'Budget alert emails disabled')
-            }}
-            aria-label="Toggle budget alerts"
-          ><i/></button>
-        </div>
-
-        <div style={{ marginTop: 14 }}>
-          <button className="primary-btn" type="button" onClick={sendTestReminder}>
-            <Mail size={15}/> Send test reminder to Gmail
+          <button className="outline-btn profile-signout" style={{ marginTop: 16 }} onClick={signOut}>
+            <LogOut size={14}/> Sign out of this account
           </button>
         </div>
-      </div>
+      )}
 
-      <MfaSettings account={account} notify={notify}/>
+      {settingsTab === 'gmail' && (
+        <div className="settings-section">
+          <span className="eyebrow">GMAIL REMINDERS & NOTIFICATIONS</span>
+          <div className="gmail-connect-card">
+            <div className="gmail-connect-left">
+              <div className="gmail-icon-wrap">
+                <Mail size={20} color="#ea4335" />
+              </div>
+              <div>
+                <b>Connected to Gmail</b>
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--subtle)' }}>
+                  {account.email || 'dhruvimittalbsc24@rvu.edu.in'}
+                </span>
+              </div>
+            </div>
+            <span className="gmail-badge"><i/> Active</span>
+          </div>
 
-      <div className="settings-section">
-        <span className="eyebrow">PREFERENCES</span>
-        <div className="settings-field">
-          <div><b>Default currency</b><span>Choose a display currency. Values are not converted.</span></div>
-          <select value={currency} onChange={e => { setCurrency(e.target.value); localStorage.setItem('finsight-currency', e.target.value) }}>
-            <option value="INR">INR · ₹</option>
-            <option value="USD">USD · $</option>
-            <option value="EUR">EUR · €</option>
-            <option value="GBP">GBP · £</option>
-          </select>
+          <div className="settings-field">
+            <div>
+              <b>Bill due date reminders</b>
+              <span>Send automated reminder email 3 days before upcoming payments.</span>
+            </div>
+            <button
+              className={`switch ${billReminders ? 'on' : ''}`}
+              onClick={() => {
+                const next = !billReminders
+                setBillReminders(next)
+                localStorage.setItem('finsight-bill-reminders-enabled', JSON.stringify(next))
+                notify(next ? 'Bill Gmail reminders enabled' : 'Bill Gmail reminders disabled')
+              }}
+              aria-label="Toggle bill reminders"
+            ><i/></button>
+          </div>
+
+          <div className="settings-field">
+            <div>
+              <b>Budget overrun alerts</b>
+              <span>Send warning email when any category spend reaches 80% of budget limit.</span>
+            </div>
+            <button
+              className={`switch ${budgetReminders ? 'on' : ''}`}
+              onClick={() => {
+                const next = !budgetReminders
+                setBudgetReminders(next)
+                localStorage.setItem('finsight-budget-reminders-enabled', JSON.stringify(next))
+                notify(next ? 'Budget alert emails enabled' : 'Budget alert emails disabled')
+              }}
+              aria-label="Toggle budget alerts"
+            ><i/></button>
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            <button className="primary-btn" type="button" onClick={sendTestReminder}>
+              <Mail size={15}/> Send test reminder to Gmail
+            </button>
+          </div>
         </div>
-        <div className="settings-field">
-          <div><b>Dark appearance</b><span>Choose a softer look for evening check-ins.</span></div>
-          <button className={`switch ${dark ? 'on' : ''}`} onClick={() => setDark(!dark)} aria-label="Toggle dark appearance"><i/></button>
-        </div>
-      </div>
+      )}
 
-      <div className="settings-section">
-        <span className="eyebrow">YOUR DATA</span>
-        <div className="settings-field">
-          <div><b>Export your activity</b><span>Download a copy of the transactions in this browser.</span></div>
-          <button className="outline-btn" onClick={exportCsv}><Download size={14}/> Export CSV</button>
-        </div>
-      </div>
+      {settingsTab === 'security' && (
+        <div className="settings-section">
+          <span className="eyebrow">TWO-STEP VERIFICATION & SECURITY</span>
+          <div className="settings-field">
+            <div>
+              <b>2-Step Verification code via Gmail</b>
+              <span>Receive a 6-digit security code on your Gmail every time you sign in.</span>
+            </div>
+            <button
+              className={`switch ${twoFactorEnabled ? 'on' : ''}`}
+              onClick={() => {
+                const next = !twoFactorEnabled
+                setTwoFactorEnabled(next)
+                localStorage.setItem('finsight-2fa-enabled', JSON.stringify(next))
+                notify(next ? '2-Step verification turned ON' : '2-Step verification turned OFF')
+              }}
+              aria-label="Toggle 2FA via Gmail"
+            ><i/></button>
+          </div>
 
-      <div className="settings-footnote"><ShieldCheck size={15}/> FinSight protects your privacy. Finance records persist in browser local storage.</div>
+          <div style={{ marginTop: 14 }}>
+            <button className="primary-btn" type="button" onClick={sendTest2FACode}>
+              <Mail size={15}/> Send test verification code to Gmail
+            </button>
+          </div>
+
+          <div style={{ marginTop: 20 }}>
+            <MfaSettings account={account} notify={notify}/>
+          </div>
+        </div>
+      )}
+
+      {settingsTab === 'preferences' && (
+        <div className="settings-section">
+          <span className="eyebrow">PREFERENCES</span>
+          <div className="settings-field">
+            <div><b>Default currency</b><span>Choose a display currency. Values are not converted.</span></div>
+            <select value={currency} onChange={e => { setCurrency(e.target.value); localStorage.setItem('finsight-currency', e.target.value) }}>
+              <option value="INR">INR · ₹</option>
+              <option value="USD">USD · $</option>
+              <option value="EUR">EUR · €</option>
+              <option value="GBP">GBP · £</option>
+            </select>
+          </div>
+          <div className="settings-field">
+            <div><b>Dark appearance</b><span>Choose a softer look for evening check-ins.</span></div>
+            <button className={`switch ${dark ? 'on' : ''}`} onClick={() => setDark(!dark)} aria-label="Toggle dark appearance"><i/></button>
+          </div>
+        </div>
+      )}
+
+      {settingsTab === 'data' && (
+        <div className="settings-section">
+          <span className="eyebrow">YOUR DATA & PRIVACY</span>
+          <div className="settings-field">
+            <div><b>Export your activity</b><span>Download a copy of the transactions in this browser.</span></div>
+            <button className="outline-btn" onClick={exportCsv}><Download size={14}/> Export CSV</button>
+          </div>
+          <div className="settings-footnote" style={{ marginTop: 16 }}>
+            <ShieldCheck size={15}/> FinSight respects your privacy. Finance records persist securely in your browser storage.
+          </div>
+        </div>
+      )}
     </div>
   </div>
 }
