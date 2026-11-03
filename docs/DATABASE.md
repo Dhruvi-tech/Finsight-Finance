@@ -18,4 +18,4 @@ Shared typed record schema: `owner` (User ObjectId), `kind` (`transaction`, `bud
 
 Indexes: `{ owner: 1, kind: 1 }` and `{ owner: 1, kind: 1, date: -1 }`. All reads, updates, and deletes filter by the authenticated owner and record kind. Account deletion removes that user's finance records first.
 
-No bank account numbers, card numbers, or bank credentials are stored. The demo uses browser localStorage and synthetic values only.
+No bank account numbers, card numbers, or bank credentials are stored. The current finance client uses browser localStorage; account finance CRUD has not yet been synchronized to MongoDB.

@@ -4,7 +4,7 @@
 
 FinSight is a student-oriented personal finance experience for understanding everyday income, spending, budgets, and savings goals. The new implementation preserves the source repository's original README and initial commit in its Git history.
 
-> **Current status:** the responsive browser app includes email sign-up/sign-in screens backed by the Express/MongoDB auth endpoints, plus a separate synthetic demo entry. Account creation requires a configured MongoDB connection and JWT secret. Finance records in the portal still live in browser storage and are not yet synchronized to the API; do not enter real financial information.
+> **Current status:** the responsive browser app opens on email sign-up and sign-in, backed by the Express/MongoDB auth endpoints. New accounts start with empty financial records; sample records and demo access have been removed. Account creation requires a configured MongoDB connection and JWT secret. Finance records remain browser-local and are not yet synchronized to the API; do not enter real financial information.
 
 ## Product features
 
@@ -13,16 +13,16 @@ FinSight is a student-oriented personal finance experience for understanding eve
 - Category budget limits and usage calculations based on ledger entries.
 - Savings goals with progress, contribution recording, completion pace, and goal management.
 - Interactive analytics charts and category reporting.
-- Rule-based, explainable FinSight insights that use browser-saved demo records.
-- Bills and calendar reminders, notifications, report preview, profile preferences, theme toggle, and demo reset.
+- Rule-based, explainable FinSight insights based on the signed-in account’s browser records.
+- Bills and calendar reminders, notifications, report preview, profile preferences, theme toggle, and sign-out control.
 - Responsive layouts for desktop, tablet, and mobile.
-- Sign-up and sign-in screens using email/password, with clear API readiness feedback and demo portal entry.
+- Sign-up and sign-in screens using email/password, with clear API readiness feedback and password visibility control.
 
 ## Architecture
 
 - **Client:** React 19, TypeScript, Vite, Recharts, Lucide icons, and a custom responsive CSS design system.
 - **API foundation:** Node.js, Express, MongoDB, Mongoose, bcrypt password hashing, signed HTTP-only JWT session cookie, Zod validation, Helmet, CORS/origin checks, and rate limiting.
-- **Demo persistence:** browser `localStorage`, clearly marked as demo mode.
+- **Finance data:** browser `localStorage`, namespaced by signed-in email until API sync is implemented.
 - **Account entry:** API signup/login creates a bcrypt-hashed account and an HTTP-only session cookie. Signed-in portal finance data remains browser-local and per-email namespaced until client/API sync is implemented.
 
 See [architecture](docs/ARCHITECTURE.md), [feature status](docs/FEATURES.md), [database schema](docs/DATABASE.md), and [API reference](docs/API.md).
@@ -60,7 +60,7 @@ No dated product screenshots have been captured yet. See `docs/intellectual-prop
 
 ## Security and privacy
 
-The browser demo contains synthetic values only. It does not connect to banks or move money. The API foundation hashes passwords and filters stored records by the authenticated owner, but needs a configured database, browser authentication integration, password recovery, end-to-end integration tests, and security review before handling real records. FinSight does not claim regulatory compliance or a security certification.
+The app does not connect to banks or move money. The API foundation hashes passwords and filters stored records by the authenticated owner, but needs a configured database, finance-data API synchronization, password recovery, end-to-end integration tests, and security review before handling real records. FinSight does not claim regulatory compliance or a security certification.
 
 See [security notes](docs/SECURITY.md). Do not commit API keys, passwords, signing secrets, connection strings, or user financial data.
 
