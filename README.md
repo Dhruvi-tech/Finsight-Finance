@@ -8,9 +8,9 @@
 
 **A calmer, clearer view of your income, spending, savings, and plans.**
 
-[Open the live demo](https://dhruvi-tech.github.io/Finsight-Finance/) · [Explore the features](docs/FEATURES.md) · [Deployment notes](docs/DEPLOYMENT.md)
+[Open the live demo](https://finsight-personal-finance.onrender.com) · [Explore the features](docs/FEATURES.md) · [Deployment notes](docs/DEPLOYMENT.md)
 
-[![FinSight checks](https://github.com/Dhruvi-tech/Finsight-Finance/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Dhruvi-tech/Finsight-Finance/actions/workflows/ci.yml)
+[![FinSight checks](https://github.com/Dhruvi-tech/finsight-personal-finance/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Dhruvi-tech/finsight-personal-finance/actions/workflows/ci.yml)
 ![React](https://img.shields.io/badge/React-19-173B3A?logo=react&logoColor=9ddcba)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-173B3A?logo=typescript&logoColor=9ddcba)
 ![License](https://img.shields.io/badge/license-not%20specified-d4ad61)
@@ -33,6 +33,8 @@ FinSight is a student-oriented personal finance dashboard for building a steady 
 - Set category budgets and savings goals, track progress, and record goal contributions.
 - Explore cash-flow charts, category reports, recurring-spend signals, and rule-based insights.
 - Manage payment reminders, notifications, profile preferences, themes, and sign-out.
+- Collapse the desktop sidebar to an icon rail, open the mobile drawer, and use keyboard shortcuts (Ctrl/Cmd+K to search; N to add).
+- Customize dashboard widgets, view savings milestones, receive budget and spending alerts, and export period-based PDF reports.
 - Use responsive layouts on desktop, tablet, and mobile.
 - Preview account creation, sign-in, and optional authenticator-app MFA flows. These require the separately deployed API to work with real accounts.
 
@@ -52,7 +54,7 @@ To enable account creation and sign-in locally, copy `.env.example` to `.env` an
 
 ## Built with
 
-- **Client:** React 19, TypeScript, Vite, Recharts, Lucide, and a custom responsive CSS design system.
+- **Client:** React 19, TypeScript, Vite, Recharts, Lucide, jsPDF, and a custom responsive motion-aware design system.
 - **API foundation:** Node.js, Express, MongoDB, Mongoose, bcrypt, signed HTTP-only JWT cookies, Zod, Helmet, CORS checks, and rate limiting.
 - **Storage today:** finance records use browser `localStorage`, namespaced by signed-in email. Client/API finance-data sync is not implemented.
 
@@ -71,10 +73,10 @@ The calculation tests cover monthly totals, category totals, savings estimates, 
 
 The free Render static site is live at **https://finsight-personal-finance.onrender.com**. Render serves static sites from a public `onrender.com` address and supports deploying them free of charge. Use the button below to deploy a separate copy to your own Render workspace.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Dhruvi-tech/Finsight-Finance)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Dhruvi-tech/finsight-personal-finance)
 
 - **Website:** [finsight-personal-finance.onrender.com](https://finsight-personal-finance.onrender.com)
-- **Source:** [FinSight on GitHub](https://github.com/Dhruvi-tech/Finsight-Finance)
+- **Source:** [FinSight on GitHub](https://github.com/Dhruvi-tech/finsight-personal-finance)
 - **Setup:** [deployment guide](docs/DEPLOYMENT.md) · [feature status](docs/FEATURES.md) · [security notes](docs/SECURITY.md)
 
 ## Security and privacy
