@@ -32,7 +32,7 @@ function AuthScreen({ onDemo, onAccount }: { onDemo: () => void; onAccount: (acc
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [apiReady, setApiReady] = useState<boolean | null>(null)
-  useEffect(() => { fetch(`${import.meta.env.VITE_API_URL || ''}/api/health`).then(r => setApiReady(r.ok)).catch(() => setApiReady(false)) }, [])
+  useEffect(() => { fetch(`${import.meta.env.VITE_API_URL || ''}/api/health`).then(async response => { if (!response.ok) return false; const health = await response.json().catch(() => null); return health?.status === 'ok' && health?.database === 'connected' }).then(setApiReady).catch(() => setApiReady(false)) }, [])
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setError('')
     if (mode === 'signup' && password.length < 10) { setError('Use at least 10 characters for your password.'); return }
