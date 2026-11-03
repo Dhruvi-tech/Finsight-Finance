@@ -67,12 +67,14 @@ npm run build
 
 The calculation tests cover monthly totals, category totals, savings estimates, large expenses, and health-score boundaries. Database-backed auth, account isolation, and CRUD integration tests need a MongoDB service and credentials. See [testing status](docs/TESTING.md).
 
-## Deployment and links
+## Open or deploy FinSight
 
-The current public address is the GitHub Pages project URL. A shorter `finsight…` address requires a custom domain or a deployment provider that issues an available project subdomain; neither is configured in this repository. GitHub Pages uses the repository owner’s account name in its default project URL.
+The free Render static site is configured in `render.yaml`. Complete the first deployment from the button below; after Render creates the site, its branded address will be **https://finsight-personal-finance.onrender.com**. Render serves static sites from a public `onrender.com` address and supports deploying them free of charge. Until the first Render deployment completes, the new address may not open yet.
 
-- **Live demo:** [dhruvi-tech.github.io/Finsight-Finance](https://dhruvi-tech.github.io/Finsight-Finance/)
-- **Source repository:** [github.com/Dhruvi-tech/Finsight-Finance](https://github.com/Dhruvi-tech/Finsight-Finance)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Dhruvi-tech/Finsight-Finance)
+
+- **Website:** [finsight-personal-finance.onrender.com](https://finsight-personal-finance.onrender.com)
+- **Source:** [FinSight on GitHub](https://github.com/Dhruvi-tech/Finsight-Finance)
 - **Setup:** [deployment guide](docs/DEPLOYMENT.md) · [feature status](docs/FEATURES.md) · [security notes](docs/SECURITY.md)
 
 ## Security and privacy

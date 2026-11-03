@@ -1,10 +1,18 @@
-# Deployment preparation
+# Deployment
 
-The public static demo is published at https://dhruvi-tech.github.io/Finsight-Finance/ from the `gh-pages` branch. It includes the browser-only demo portal and empty starting data. This static site does not provide account registration, sign-in, or MFA until the API and database are deployed. GitHub Pages uses the account name in its default project URL; a shorter `finsight…` address needs a custom domain or a configured hosting provider with an available project subdomain. The repository also keeps Vercel and Render configuration for a future hosted client/API setup.
+## Free public website
+
+The default Render Blueprint in [render.yaml](../render.yaml) publishes the client as a static site. Use the [Deploy to Render](https://render.com/deploy?repo=https://github.com/Dhruvi-tech/Finsight-Finance) button in the README and connect the public repository. The requested service name is `finsight-personal-finance`, which gives the branded URL `https://finsight-personal-finance.onrender.com` when the first deployment finishes. Render's static sites are free and receive a public `onrender.com` URL. The site may take a few minutes to appear after setup.
+
+This is a browser-only demo with empty starting data. Account registration, sign-in, and MFA need the API and database to be deployed separately. Finance records remain in local browser storage and are not synchronized to the API.
+
+## Optional API setup
+
+The API Blueprint is in [render-api.yaml](../render-api.yaml). Create a MongoDB Atlas database before deploying it, then provide the requested secrets and client origin. Without these values, account authentication remains unavailable.
 
 1. Create a MongoDB Atlas database and restrict network access to the API host. Use a least-privilege application user.
-2. Deploy the repository's `render.yaml` as a Render web service. Set `MONGODB_URI`, generated `JWT_SECRET`, `MFA_ENCRYPTION_KEY` (`openssl rand -hex 32`), and `CLIENT_ORIGIN` (the final HTTPS client origin). Keep a protected backup of the MFA encryption key; without it, encrypted authenticator secrets cannot be decrypted. Confirm `/api/health` reports `connected`.
-3. For a permanent production setup, deploy `client/` via the root `vercel.json` (or retain GitHub Pages for the browser-only demo). Configure the production API URL in client environment settings to connect authentication to the separately hosted API.
+2. Deploy `render-api.yaml` as a separate Render Blueprint. Set `MONGODB_URI`, generated `JWT_SECRET`, `MFA_ENCRYPTION_KEY` (`openssl rand -hex 32`), and `CLIENT_ORIGIN` (the final HTTPS client origin). Keep a protected backup of the MFA encryption key; without it, encrypted authenticator secrets cannot be decrypted. Confirm `/api/health` reports `connected`.
+3. Configure the production API URL in the Render static site's build environment as `VITE_API_URL` to connect authentication to the separately hosted API.
 4. Configure production auth and cookie domains/origins, then test registration, session persistence, data isolation, account export and account deletion with two separate test accounts.
 5. Enable HTTPS, review host logs for sensitive data, and run the CI workflow before release.
 
