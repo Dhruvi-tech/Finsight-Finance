@@ -4,11 +4,11 @@
 
 FinSight is a student-oriented personal finance experience for understanding everyday income, spending, budgets, and savings goals. The new implementation preserves the source repository's original README and initial commit in its Git history.
 
-> **Current status:** the responsive browser app opens on email sign-up and sign-in, backed by the Express/MongoDB auth endpoints. New accounts start with empty financial records; sample records and demo access have been removed. Account creation requires a configured MongoDB connection and JWT secret. Finance records remain browser-local and are not yet synchronized to the API; do not enter real financial information.
+> **Current status:** the responsive browser app opens on account creation and sign-in, with a small demo sign-in link on both tabs. The public demo runs in the browser and starts with an empty finance space. Email account creation, sign-in, and MFA require a deployed API with MongoDB and production secrets. Finance records are stored in browser local storage and are not synchronized to the API; do not enter sensitive financial information.
 
 ## Product features
 
-- Overview with current balance, income, expenses, savings rate, cash-flow charts, category mix, budget pulse, recent activity, goals, and upcoming payment reminders.
+- Overview with current balance, income, expenses, savings rate, cash-flow charts, category mix, budget pulse, recent activity, goals, upcoming payment reminders, a 30-day outlook, and repeat-spending detection.
 - Income/expense entry, search, type filtering, delete confirmation, and CSV export.
 - Category budget limits and usage calculations based on ledger entries.
 - Savings goals with progress, contribution recording, completion pace, and goal management.
@@ -53,7 +53,13 @@ The calculation tests cover monthly totals, category totals, savings estimates, 
 
 ## Deployment preparation
 
-The repository includes `vercel.json`, `render.yaml`, and GitHub Actions CI configuration. The client is prepared for Vercel and the API for Render with MongoDB Atlas. No live deployment exists yet. Follow [deployment instructions](docs/DEPLOYMENT.md); external account authorization and database configuration are required.
+The client is published as a static public demo on GitHub Pages. Account authentication and MFA need an API deployment on Render and a configured MongoDB Atlas database. See [deployment instructions](docs/DEPLOYMENT.md) for the current public demo link and remaining setup.
+
+## Links
+
+- **Public demo:** https://dhruvi-tech.github.io/finsight-personal-finance/
+- **GitHub repository:** https://github.com/Dhruvi-tech/finsight-personal-finance
+- [Deployment setup](docs/DEPLOYMENT.md) · [API reference](docs/API.md) · [Feature status](docs/FEATURES.md)
 
 ## Screenshots
 
