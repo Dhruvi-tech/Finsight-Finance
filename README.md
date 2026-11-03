@@ -1,34 +1,42 @@
+<div align="center">
+
+<img src="docs/finsight-readme.gif" alt="FinSight animated banner: see your money, understand your future" width="100%" />
+
 # FinSight
 
-**See Your Money. Understand Your Future.**
+### See your money. Understand your future.
 
-FinSight is a student-oriented personal finance experience for understanding everyday income, spending, budgets, and savings goals. The new implementation preserves the source repository's original README and initial commit in its Git history.
+**A calmer, clearer view of your income, spending, savings, and plans.**
 
-> **Current status:** the responsive browser app opens on account creation and sign-in, with a small demo sign-in link on both tabs. The public demo runs in the browser and starts with an empty finance space. Email account creation, sign-in, and MFA require a deployed API with MongoDB and production secrets. Finance records are stored in browser local storage and are not synchronized to the API; do not enter sensitive financial information.
+[Open the live demo](https://dhruvi-tech.github.io/Finsight-Finance/) · [Explore the features](docs/FEATURES.md) · [Deployment notes](docs/DEPLOYMENT.md)
 
-## Product features
+[![FinSight checks](https://github.com/Dhruvi-tech/Finsight-Finance/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Dhruvi-tech/Finsight-Finance/actions/workflows/ci.yml)
+![React](https://img.shields.io/badge/React-19-173B3A?logo=react&logoColor=9ddcba)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-173B3A?logo=typescript&logoColor=9ddcba)
+![License](https://img.shields.io/badge/license-not%20specified-d4ad61)
 
-- Overview with current balance, income, expenses, savings rate, cash-flow charts, category mix, budget pulse, recent activity, goals, upcoming payment reminders, a 30-day outlook, and repeat-spending detection.
-- Income/expense entry, search, type filtering, delete confirmation, and CSV export.
-- Category budget limits and usage calculations based on ledger entries.
-- Savings goals with progress, contribution recording, completion pace, and goal management.
-- Interactive analytics charts and category reporting.
-- Rule-based, explainable FinSight insights based on the signed-in account’s browser records.
-- Bills and calendar reminders, notifications, report preview, profile preferences, theme toggle, and sign-out control.
-- Responsive layouts for desktop, tablet, and mobile.
-- Sign-up and sign-in screens using email/password, with clear API readiness feedback and password visibility control.
-- Optional authenticator-app MFA with single-use recovery codes and a second sign-in step.
+</div>
 
-## Architecture
+> **Demo status:** The public site opens in your browser with an empty finance space. Use the small **Demo sign in** link on the account screen to explore it. Account registration, server sign-in, and multi-factor authentication need a deployed API and database. Finance records currently stay in browser storage and are not synced. Please do not enter sensitive financial information.
 
-- **Client:** React 19, TypeScript, Vite, Recharts, Lucide icons, and a custom responsive CSS design system.
-- **API foundation:** Node.js, Express, MongoDB, Mongoose, bcrypt password hashing, signed HTTP-only JWT session cookie, Zod validation, Helmet, CORS/origin checks, and rate limiting.
-- **Finance data:** browser `localStorage`, namespaced by signed-in email until API sync is implemented.
-- **Account entry:** API signup/login creates a bcrypt-hashed account and an HTTP-only session cookie. Signed-in portal finance data remains browser-local and per-email namespaced until client/API sync is implemented.
+## A clearer picture of your finances
 
-See [architecture](docs/ARCHITECTURE.md), [feature status](docs/FEATURES.md), [database schema](docs/DATABASE.md), and [API reference](docs/API.md).
+FinSight is a student-oriented personal finance dashboard for building a steady money routine. It brings everyday activity and longer-term goals together in one responsive workspace.
 
-## Local setup
+| See the whole picture | Make a plan | Stay on track |
+| --- | --- | --- |
+| Balance, income, expenses, cash flow, categories, and recent activity | Budgets, savings goals, bills, reminders, and a 30-day outlook | Search, filters, CSV export, notifications, and explainable insights |
+
+### What you can do
+
+- Record and review income and expenses, filter transactions, confirm deletes, and export a CSV.
+- Set category budgets and savings goals, track progress, and record goal contributions.
+- Explore cash-flow charts, category reports, recurring-spend signals, and rule-based insights.
+- Manage payment reminders, notifications, profile preferences, themes, and sign-out.
+- Use responsive layouts on desktop, tablet, and mobile.
+- Preview account creation, sign-in, and optional authenticator-app MFA flows. These require the separately deployed API to work with real accounts.
+
+## Run it locally
 
 Requires Node.js 24 and npm.
 
@@ -38,9 +46,17 @@ npm ci --prefix client
 npm run dev
 ```
 
-The Vite client runs at `http://localhost:5173`; the API runs at `http://localhost:4000`. Without database settings, the API starts in limited mode: `/api/health` is available, but account routes are disabled.
+The Vite client runs at `http://localhost:5173`; the API runs at `http://localhost:4000`. Without database settings, the API starts in limited mode and account routes are unavailable.
 
-Copy `.env.example` to `.env` and configure `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_ORIGIN` to enable account creation and sign-in. Keep secrets in local environment files or the deployment provider's secret store. Vite proxies `/api` to the local API during development; set `VITE_API_URL` for a separately deployed API.
+To enable account creation and sign-in locally, copy `.env.example` to `.env` and configure `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_ORIGIN`. Keep secrets in local environment files or your deployment provider’s secret store. Vite proxies `/api` during development; set `VITE_API_URL` when the API is hosted separately.
+
+## Built with
+
+- **Client:** React 19, TypeScript, Vite, Recharts, Lucide, and a custom responsive CSS design system.
+- **API foundation:** Node.js, Express, MongoDB, Mongoose, bcrypt, signed HTTP-only JWT cookies, Zod, Helmet, CORS checks, and rate limiting.
+- **Storage today:** finance records use browser `localStorage`, namespaced by signed-in email. Client/API finance-data sync is not implemented.
+
+See the [architecture](docs/ARCHITECTURE.md), [database schema](docs/DATABASE.md), and [API reference](docs/API.md).
 
 ## Checks
 
@@ -49,28 +65,22 @@ npm test
 npm run build
 ```
 
-The calculation tests cover monthly totals, category totals, savings estimates, large expenses, and health-score boundaries. Database-backed auth, isolation, and CRUD integration tests were not run because no MongoDB service or credentials were provided. Check [testing status](docs/TESTING.md).
+The calculation tests cover monthly totals, category totals, savings estimates, large expenses, and health-score boundaries. Database-backed auth, account isolation, and CRUD integration tests need a MongoDB service and credentials. See [testing status](docs/TESTING.md).
 
-## Deployment preparation
+## Deployment and links
 
-The client is published as a static public demo on GitHub Pages. Account authentication and MFA need an API deployment on Render and a configured MongoDB Atlas database. See [deployment instructions](docs/DEPLOYMENT.md) for the current public demo link and remaining setup.
+The current public address is the GitHub Pages project URL. A shorter `finsight…` address requires a custom domain or a deployment provider that issues an available project subdomain; neither is configured in this repository. GitHub Pages uses the repository owner’s account name in its default project URL.
 
-## Links
-
-- **Public demo:** https://dhruvi-tech.github.io/Finsight-Finance/
-- **GitHub repository:** https://github.com/Dhruvi-tech/Finsight-Finance
-- [Deployment setup](docs/DEPLOYMENT.md) · [API reference](docs/API.md) · [Feature status](docs/FEATURES.md)
-
-## Screenshots
-
-No dated product screenshots have been captured yet. See `docs/intellectual-property/SCREENSHOT_REGISTER.md` for the register and capture guidance.
+- **Live demo:** [dhruvi-tech.github.io/Finsight-Finance](https://dhruvi-tech.github.io/Finsight-Finance/)
+- **Source repository:** [github.com/Dhruvi-tech/Finsight-Finance](https://github.com/Dhruvi-tech/Finsight-Finance)
+- **Setup:** [deployment guide](docs/DEPLOYMENT.md) · [feature status](docs/FEATURES.md) · [security notes](docs/SECURITY.md)
 
 ## Security and privacy
 
-The app does not connect to banks or move money. The API foundation hashes passwords and filters stored records by the authenticated owner, but needs a configured database, finance-data API synchronization, password recovery, end-to-end integration tests, and security review before handling real records. FinSight does not claim regulatory compliance or a security certification.
+FinSight does not connect to banks or move money. The API foundation hashes passwords and filters stored records by authenticated owner, but needs a configured database, finance-data API synchronization, password recovery, end-to-end integration tests, and security review before handling real records. FinSight does not claim regulatory compliance or a security certification.
 
-See [security notes](docs/SECURITY.md). Do not commit API keys, passwords, signing secrets, connection strings, or user financial data.
+Never commit API keys, passwords, signing secrets, connection strings, or personal financial data. Review the [security notes](docs/SECURITY.md) before deploying.
 
-## Contributors and rights
+## Project notes
 
-The original repository contains only a README and initial commit; the referenced product PDF was not present among the available files. Contributor and proposed-owner details supplied in the earlier project brief are preserved as unverified project information in [contributions and ownership](docs/CONTRIBUTIONS_AND_OWNERSHIP.md). No repository licence is included pending ownership and licensing clarification. See the [third-party register](docs/THIRD_PARTY_LICENSES.md).
+The source repository began with a README and initial commit; the product PDF referenced in the earlier brief was not present among the available files. Contributor and proposed-owner details remain unverified in [contributions and ownership](docs/CONTRIBUTIONS_AND_OWNERSHIP.md). No repository license is included pending ownership and licensing clarification. See the [third-party register](docs/THIRD_PARTY_LICENSES.md).

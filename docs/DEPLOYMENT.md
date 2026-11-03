@@ -1,6 +1,6 @@
 # Deployment preparation
 
-The public static demo is published at https://dhruvi-tech.github.io/Finsight-Finance/ from the `gh-pages` branch. It includes the browser-only demo portal and empty starting data. This static site does not provide account registration, sign-in, or MFA until the API and database are deployed. The repository also keeps Vercel and Render configuration for a future hosted client/API setup.
+The public static demo is published at https://dhruvi-tech.github.io/Finsight-Finance/ from the `gh-pages` branch. It includes the browser-only demo portal and empty starting data. This static site does not provide account registration, sign-in, or MFA until the API and database are deployed. GitHub Pages uses the account name in its default project URL; a shorter `finsight…` address needs a custom domain or a configured hosting provider with an available project subdomain. The repository also keeps Vercel and Render configuration for a future hosted client/API setup.
 
 1. Create a MongoDB Atlas database and restrict network access to the API host. Use a least-privilege application user.
 2. Deploy the repository's `render.yaml` as a Render web service. Set `MONGODB_URI`, generated `JWT_SECRET`, `MFA_ENCRYPTION_KEY` (`openssl rand -hex 32`), and `CLIENT_ORIGIN` (the final HTTPS client origin). Keep a protected backup of the MFA encryption key; without it, encrypted authenticator secrets cannot be decrypted. Confirm `/api/health` reports `connected`.
